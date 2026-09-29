@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <rect width="40" height="40" y="4" rx="8" fill="#1288E8"/>
+  <path d="M26 16h-4v-2c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v2h-4c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V17c0-.55-.45-1-1-1zm-5 0h-2v-1h2v1z" fill="white"/>
+  <text x="50" y="30" font-family="Plus Jakarta Sans, sans-serif" font-size="20" font-weight="800" fill="#17324F">Job Board</text>
+</svg>

@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brandbg text-brandtext font-sans antialiased min-h-screen;
+  }
+
+  input,
+  textarea,
+  select {
+    @apply border border-brandborder rounded-brand outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 text-brandtext;
+  }
+}
