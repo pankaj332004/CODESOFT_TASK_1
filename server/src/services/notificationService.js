@@ -66,7 +66,43 @@ const sendStatusUpdateNotification = async ({
   });
 };
 
+const sendInterviewScheduledNotification = async ({
+  candidateEmail,
+  candidateName,
+  jobTitle,
+  companyName,
+  date,
+  time,
+  type,
+  meetingLink,
+  notes,
+}) => {
+  await sendEmail({
+    to: candidateEmail,
+    subject: `Interview Scheduled: ${jobTitle} at ${companyName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #17324f;">
+        <h2 style="color: #10b981;">🎉 Interview Scheduled!</h2>
+        <p>Dear ${candidateName},</p>
+        <p>Great news! <strong>${companyName}</strong> has scheduled an interview with you for the <strong>${jobTitle}</strong> position.</p>
+        
+        <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+          <p style="margin: 4px 0;"><strong>📅 Date:</strong> ${date}</p>
+          <p style="margin: 4px 0;"><strong>⏰ Time:</strong> ${time}</p>
+          <p style="margin: 4px 0;"><strong>💻 Type:</strong> ${type || 'Video Call'}</p>
+          ${meetingLink ? `<p style="margin: 8px 0;"><a href="${meetingLink}" style="background-color: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block;">Join Interview Link</a></p>` : ''}
+          ${notes ? `<p style="margin: 8px 0; font-size: 13px; color: #4b5563;"><strong>Notes:</strong> ${notes}</p>` : ''}
+        </div>
+
+        <p>You can also view this interview under <strong>My Interviews</strong> on your Candidate Dashboard.</p>
+        <p style="margin-top: 24px;">Best regards,<br/>The Job Board Team</p>
+      </div>
+    `,
+  });
+};
+
 module.exports = {
   sendApplicationNotification,
   sendStatusUpdateNotification,
+  sendInterviewScheduledNotification,
 };

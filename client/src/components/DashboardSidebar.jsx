@@ -10,6 +10,8 @@ import {
   Settings,
   LogOut,
   Building,
+  Bell,
+  Calendar,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -70,14 +72,9 @@ const DashboardSidebar = () => {
               <span>Post a Job</span>
             </NavLink>
 
-            <NavLink to="/employer#manage-jobs" className={linkClass}>
-              <Briefcase size={18} />
-              <span>Manage Jobs</span>
-            </NavLink>
-
-            <NavLink to="/employer#applications" className={linkClass}>
-              <FileText size={18} />
-              <span>Applications</span>
+            <NavLink to="/employer/interviews" className={linkClass}>
+              <Calendar size={18} />
+              <span>Interviews</span>
             </NavLink>
 
             <NavLink to="/candidate/profile" className={linkClass}>
@@ -92,24 +89,29 @@ const DashboardSidebar = () => {
               <span>Dashboard</span>
             </NavLink>
 
-            <NavLink to="/candidate/profile" className={linkClass}>
-              <User size={18} />
-              <span>My Profile</span>
-            </NavLink>
-
             <NavLink to="/candidate/applications" className={linkClass}>
               <Briefcase size={18} />
               <span>My Applications</span>
             </NavLink>
 
-            <NavLink to="/jobs" className="flex items-center gap-3 px-3.5 py-2.5 rounded-brand text-sm font-semibold text-brandtext-light hover:bg-slate-50 hover:text-primary transition-all">
+            <NavLink to="/candidate/saved-jobs" className={linkClass}>
               <Bookmark size={18} />
-              <span>Browse Jobs</span>
+              <span>Saved Jobs</span>
             </NavLink>
 
-            <NavLink to="/candidate/profile" className="flex items-center gap-3 px-3.5 py-2.5 rounded-brand text-sm font-semibold text-brandtext-light hover:bg-slate-50 hover:text-primary transition-all">
-              <Settings size={18} />
-              <span>Settings</span>
+            <NavLink to="/candidate/alerts" className={linkClass}>
+              <Bell size={18} />
+              <span>Job Alerts</span>
+            </NavLink>
+
+            <NavLink to="/candidate/interviews" className={linkClass}>
+              <Calendar size={18} />
+              <span>Interviews</span>
+            </NavLink>
+
+            <NavLink to="/candidate/profile" className={linkClass}>
+              <User size={18} />
+              <span>My Profile</span>
             </NavLink>
           </>
         )}

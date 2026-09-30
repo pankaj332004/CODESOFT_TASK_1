@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Briefcase, Menu, X, User, LogOut, ChevronDown, PlusCircle } from 'lucide-react';
+import { Briefcase, Menu, X, User, LogOut, ChevronDown, PlusCircle, Building, Bookmark, Bell, Calendar, Shield } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import NotificationBell from './NotificationBell';
 
 const Navbar = () => {
-  const { user, isAuthenticated, isEmployer, logout } = useAuth();
+  const { user, isAuthenticated, isEmployer, isAdmin, logout } = useAuth();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -35,7 +37,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-7">
           <Link
             to="/"
             className={`text-[14.5px] font-medium py-1.5 transition-colors duration-150 ${
@@ -52,6 +54,14 @@ const Navbar = () => {
           >
             Browse Jobs
           </Link>
+          <Link
+            to="/companies"
+            className={`text-[14.5px] font-medium py-1.5 transition-colors duration-150 ${
+              isActive('/companies') ? 'text-primary font-semibold border-b-2 border-primary' : 'text-brandtext-light hover:text-primary'
+            }`}
+          >
+            Companies
+          </Link>
           <a href="/#categories" className="text-[14.5px] font-medium py-1.5 text-brandtext-light hover:text-primary transition-colors duration-150">
             Categories
           </a>
@@ -66,9 +76,22 @@ const Navbar = () => {
         </nav>
 
         {/* Right Action Buttons */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {isAuthenticated && <NotificationBell />}
+
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-full text-xs font-bold border border-purple-200 transition-colors"
+            >
+              <Shield size={13} />
+              <span>Admin Panel</span>
+            </Link>
+          )}
+
           {isAuthenticated ? (
             <div className="relative">
+
               <button
                 className="flex items-center gap-2 bg-slate-50 border border-brandborder pl-1.5 pr-3 py-1 rounded-full hover:bg-slate-100 transition-colors"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
@@ -101,6 +124,16 @@ const Navbar = () => {
                     <span className="text-[11px] uppercase tracking-wider font-bold text-primary">{user?.role}</span>
                   </div>
                   <hr className="my-1.5 border-brandborder" />
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-purple-700 font-bold bg-purple-50/70 hover:bg-purple-100 transition-colors"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <Shield size={16} />
+                      <span>Admin Control Panel</span>
+                    </Link>
+                  )}
                   <Link
                     to={isEmployer ? '/employer' : '/candidate'}
                     className="flex items-center gap-2.5 px-4 py-2 text-sm text-brandtext-light hover:bg-primary-light hover:text-primary transition-colors"
@@ -109,16 +142,43 @@ const Navbar = () => {
                     <User size={16} />
                     <span>Dashboard</span>
                   </Link>
+
                   {!isEmployer && (
-                    <Link
-                      to="/candidate/applications"
-                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-brandtext-light hover:bg-primary-light hover:text-primary transition-colors"
-                      onClick={() => setUserDropdownOpen(false)}
-                    >
-                      <Briefcase size={16} />
-                      <span>My Applications</span>
-                    </Link>
+                    <>
+                      <Link
+                        to="/candidate/applications"
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-brandtext-light hover:bg-primary-light hover:text-primary transition-colors"
+                        onClick={() => setUserDropdownOpen(false)}
+                      >
+                        <Briefcase size={16} />
+                        <span>My Applications</span>
+                      </Link>
+                      <Link
+                        to="/candidate/saved-jobs"
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-brandtext-light hover:bg-primary-light hover:text-primary transition-colors"
+                        onClick={() => setUserDropdownOpen(false)}
+                      >
+                        <Bookmark size={16} />
+                        <span>Saved Jobs</span>
+                      </Link>
+                      <Link
+                        to="/candidate/alerts"
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-brandtext-light hover:bg-primary-light hover:text-primary transition-colors"
+                        onClick={() => setUserDropdownOpen(false)}
+                      >
+                        <Bell size={16} />
+                        <span>Job Alerts</span>
+                      </Link>
+                    </>
                   )}
+                  <Link
+                    to={isEmployer ? '/employer/interviews' : '/candidate/interviews'}
+                    className="flex items-center gap-2.5 px-4 py-2 text-sm text-brandtext-light hover:bg-primary-light hover:text-primary transition-colors"
+                    onClick={() => setUserDropdownOpen(false)}
+                  >
+                    <Calendar size={16} />
+                    <span>Interviews</span>
+                  </Link>
                   <Link
                     to="/candidate/profile"
                     className="flex items-center gap-2.5 px-4 py-2 text-sm text-brandtext-light hover:bg-primary-light hover:text-primary transition-colors"

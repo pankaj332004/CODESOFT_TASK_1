@@ -8,7 +8,9 @@ const { uploadStreamToCloudinary } = require('../config/cloudinary');
 const {
   sendApplicationNotification,
   sendStatusUpdateNotification,
+  sendInterviewScheduledNotification,
 } = require('../services/notificationService');
+const { sendRealtimeNotification } = require('../socket');
 
 // @desc    Apply for a job
 // @route   POST /api/applications
@@ -82,6 +84,24 @@ const applyJob = async (req, res) => {
         companyName: targetJob.company,
       }).catch(console.error);
 
+      // Trigger real-time notifications
+      if (targetJob.employer?._id) {
+        sendRealtimeNotification({
+          recipientId: targetJob.employer._id,
+          title: 'New Job Application',
+          message: `${candidateName || req.user.name} applied for "${targetJob.title}"`,
+          type: 'application',
+          link: '/employer/dashboard',
+        }).catch(console.error);
+      }
+      sendRealtimeNotification({
+        recipientId: req.user._id,
+        title: 'Application Submitted',
+        message: `Your application for "${targetJob.title}" at ${targetJob.company} was submitted successfully!`,
+        type: 'application',
+        link: '/candidate/dashboard',
+      }).catch(console.error);
+
       return res.status(201).json({ success: true, data: application });
     } else {
       // In-Memory store
@@ -133,7 +153,25 @@ const applyJob = async (req, res) => {
         companyName: targetJob.company,
       }).catch(console.error);
 
+      if (employerUser?._id) {
+        sendRealtimeNotification({
+          recipientId: employerUser._id,
+          title: 'New Job Application',
+          message: `${candidateName || req.user.name} applied for "${targetJob.title}"`,
+          type: 'application',
+          link: '/employer/dashboard',
+        }).catch(console.error);
+      }
+      sendRealtimeNotification({
+        recipientId: req.user._id,
+        title: 'Application Submitted',
+        message: `Your application for "${targetJob.title}" at ${targetJob.company} was submitted successfully!`,
+        type: 'application',
+        link: '/candidate/dashboard',
+      }).catch(console.error);
+
       return res.status(201).json({ success: true, data: newApplication });
+
     }
   } catch (error) {
     console.error('applyJob error:', error);
@@ -324,6 +362,17 @@ const updateApplicationStatus = async (req, res) => {
         status,
       }).catch(console.error);
 
+      // Send real-time notification
+      if (application.candidate) {
+        sendRealtimeNotification({
+          recipientId: application.candidate,
+          title: 'Application Status Updated',
+          message: `Your application for "${application.job?.title || 'Position'}" was updated to: ${status}.`,
+          type: 'status',
+          link: '/candidate/dashboard',
+        }).catch(console.error);
+      }
+
       return res.json({ success: true, data: application });
     } else {
       const appIndex = store.applications.findIndex(
@@ -345,10 +394,155 @@ const updateApplicationStatus = async (req, res) => {
         status,
       }).catch(console.error);
 
+      if (app.candidate) {
+        sendRealtimeNotification({
+          recipientId: app.candidate,
+          title: 'Application Status Updated',
+          message: `Your application for "${job?.title || 'Position'}" was updated to: ${status}.`,
+          type: 'status',
+          link: '/candidate/dashboard',
+        }).catch(console.error);
+      }
+
       return res.json({ success: true, data: app });
     }
   } catch (error) {
     console.error('updateApplicationStatus error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Schedule interview for candidate
+// @route   POST /api/applications/:id/schedule-interview
+// @access  Private (Employer)
+const scheduleInterview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date, time, type, meetingLink, notes } = req.body;
+
+    const interviewData = {
+      date: date || new Date().toISOString().split('T')[0],
+      time: time || '10:00 AM',
+      type: type || 'Video Call',
+      meetingLink: meetingLink || '',
+      notes: notes || '',
+      scheduledAt: new Date(),
+    };
+
+    if (store.isUsingMongo) {
+      const application = await Application.findById(id).populate('job');
+      if (!application) {
+        return res.status(404).json({ success: false, message: 'Application not found' });
+      }
+
+      application.status = 'Interview';
+      application.interview = interviewData;
+      await application.save();
+
+      const { sendInterviewScheduledNotification } = require('../services/notificationService');
+      sendInterviewScheduledNotification({
+        candidateEmail: application.candidateEmail,
+        candidateName: application.candidateName,
+        jobTitle: application.job?.title || 'Position',
+        companyName: application.job?.company || 'Company',
+        ...interviewData,
+      }).catch(console.error);
+
+      if (application.candidate) {
+        sendRealtimeNotification({
+          recipientId: application.candidate,
+          title: '🎉 Interview Scheduled!',
+          message: `${application.job?.company || 'Employer'} scheduled an interview for "${application.job?.title || 'Position'}" on ${interviewData.date} at ${interviewData.time}.`,
+          type: 'interview',
+          link: '/candidate/interviews',
+        }).catch(console.error);
+      }
+
+      return res.json({ success: true, data: application });
+    } else {
+      const appIndex = store.applications.findIndex(
+        (a) => a._id.toString() === id.toString()
+      );
+      if (appIndex === -1) {
+        return res.status(404).json({ success: false, message: 'Application not found' });
+      }
+
+      store.applications[appIndex].status = 'Interview';
+      store.applications[appIndex].interview = interviewData;
+
+      const app = store.applications[appIndex];
+      const job = store.jobs.find((j) => j._id.toString() === app.job.toString());
+
+      const { sendInterviewScheduledNotification } = require('../services/notificationService');
+      sendInterviewScheduledNotification({
+        candidateEmail: app.candidateEmail,
+        candidateName: app.candidateName,
+        jobTitle: job?.title || 'Position',
+        companyName: job?.company || 'Company',
+        ...interviewData,
+      }).catch(console.error);
+
+      if (app.candidate) {
+        sendRealtimeNotification({
+          recipientId: app.candidate,
+          title: '🎉 Interview Scheduled!',
+          message: `${job?.company || 'Employer'} scheduled an interview for "${job?.title || 'Position'}" on ${interviewData.date} at ${interviewData.time}.`,
+          type: 'interview',
+          link: '/candidate/interviews',
+        }).catch(console.error);
+      }
+
+      return res.json({ success: true, data: { ...app, job } });
+    }
+
+  } catch (error) {
+    console.error('scheduleInterview error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get user's scheduled interviews
+// @route   GET /api/applications/my-interviews
+// @access  Private (Candidate or Employer)
+const getMyInterviews = async (req, res) => {
+  try {
+    const userId = req.user._id.toString();
+    const isEmployer = req.user.role === 'employer';
+
+    if (store.isUsingMongo) {
+      let query = { 'interview.date': { $ne: '' } };
+      if (isEmployer) {
+        const empJobs = await Job.find({ employer: userId }).select('_id');
+        const jobIds = empJobs.map((j) => j._id);
+        query.job = { $in: jobIds };
+      } else {
+        query.candidate = userId;
+      }
+
+      const interviews = await Application.find(query)
+        .populate('job')
+        .sort({ 'interview.scheduledAt': -1 });
+
+      return res.json({ success: true, data: interviews });
+    } else {
+      let apps = store.applications.filter((a) => a.interview && a.interview.date);
+      if (isEmployer) {
+        const empJobs = store.jobs.filter((j) => j.employer?.toString() === userId);
+        const jobIds = empJobs.map((j) => j._id.toString());
+        apps = apps.filter((a) => jobIds.includes(a.job.toString()));
+      } else {
+        apps = apps.filter((a) => a.candidate.toString() === userId);
+      }
+
+      const populated = apps.map((app) => ({
+        ...app,
+        job: store.jobs.find((j) => j._id.toString() === app.job.toString()) || null,
+      }));
+
+      return res.json({ success: true, data: populated });
+    }
+  } catch (error) {
+    console.error('getMyInterviews error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -358,4 +552,6 @@ module.exports = {
   getCandidateApplications,
   getEmployerApplications,
   updateApplicationStatus,
+  scheduleInterview,
+  getMyInterviews,
 };

@@ -34,8 +34,16 @@ const applicationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Applied', 'Under Review', 'Interview', 'Offer', 'Rejected'],
+      enum: ['Applied', 'Shortlisted', 'Under Review', 'Interview', 'Hired', 'Offer', 'Rejected'],
       default: 'Applied',
+    },
+    interview: {
+      date: { type: String, default: '' },
+      time: { type: String, default: '' },
+      type: { type: String, default: 'Video Call' },
+      meetingLink: { type: String, default: '' },
+      notes: { type: String, default: '' },
+      scheduledAt: { type: Date, default: Date.now },
     },
   },
   {

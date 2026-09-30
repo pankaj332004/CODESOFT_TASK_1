@@ -1,7 +1,88 @@
-node_modules/
+# ====================================================================
+# Job Board Monorepo - Comprehensive .gitignore
+# Prevents secrets, node_modules, build artifacts, Python caches, 
+# and user uploads from ever being committed or pushed to GitHub.
+# ====================================================================
+
+# 1. Environment Variables & Secrets (CRITICAL)
 .env
-uploads/resumes/*
-!uploads/resumes/.gitkeep
+.env.*
+*.env
+**/.env
+**/.env.*
+**/*.env
+!.env.example
+!**/.env.example
+
+# 2. Node Dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 3. Build & Distribution Artifacts
 dist/
-.DS_Store
+**/dist/
+dist-ssr/
+build/
+**/build/
+out/
+.output/
+*.local
+
+# 4. Python & AI Microservice
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 5. User Uploads & Resumes (Cloudinary handles persistence)
+uploads/
+uploads/*
+!uploads/.gitkeep
+server/uploads/*
+!server/uploads/.gitkeep
+client/public/uploads/*
+!client/public/uploads/.gitkeep
+
+# 6. Logs & Temp Files
+logs/
 *.log
+*.tmp
+*.temp
+
+# 7. OS Metadata
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# 8. Editor & IDE Settings
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# 9. Internal AI Workspace Caches
+.gemini/
+.agents/
+scratch/

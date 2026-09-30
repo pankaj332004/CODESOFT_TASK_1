@@ -18,6 +18,16 @@ import MyApplications from './pages/MyApplications';
 import Profile from './pages/Profile';
 import Contact from './pages/Contact';
 
+// Phase 2 Pages
+import Companies from './pages/Companies';
+import CompanyDetails from './pages/CompanyDetails';
+import SavedJobs from './pages/SavedJobs';
+import JobAlerts from './pages/JobAlerts';
+import MyInterviews from './pages/MyInterviews';
+
+// Phase 4 Pages
+import AdminDashboard from './pages/AdminDashboard';
+
 function App() {
   return (
     <Routes>
@@ -26,6 +36,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/jobs/:id" element={<JobDetails />} />
+        <Route path="/companies" element={<Companies />} />
+        <Route path="/companies/:name" element={<CompanyDetails />} />
         <Route path="/apply/:id" element={<ApplyJob />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -35,6 +47,22 @@ function App() {
           element={
             <ProtectedRoute role="employer">
               <PostJob />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDashboard />
             </ProtectedRoute>
           }
         />
@@ -50,6 +78,9 @@ function App() {
       >
         <Route path="/candidate" element={<CandidateDashboard />} />
         <Route path="/candidate/applications" element={<MyApplications />} />
+        <Route path="/candidate/saved-jobs" element={<SavedJobs />} />
+        <Route path="/candidate/alerts" element={<JobAlerts />} />
+        <Route path="/candidate/interviews" element={<MyInterviews />} />
       </Route>
 
       {/* Profile Settings (Accessible by both Candidate and Employer) */}
@@ -73,6 +104,7 @@ function App() {
         }
       >
         <Route path="/employer" element={<EmployerDashboard />} />
+        <Route path="/employer/interviews" element={<MyInterviews />} />
       </Route>
 
       {/* Fallback */}
@@ -82,3 +114,4 @@ function App() {
 }
 
 export default App;
+

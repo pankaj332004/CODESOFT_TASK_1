@@ -1,16 +1,25 @@
 require('dotenv').config();
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { connectDB } = require('./config/db');
+const { initSocket } = require('./socket');
 
 // Route files
 const authRoutes = require('./routes/authRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const userRoutes = require('./routes/userRoutes');
+const companyRoutes = require('./routes/companyRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
+const httpServer = http.createServer(app);
+
+// Initialize Socket.IO
+initSocket(httpServer);
 
 // Connect Database
 connectDB();
@@ -33,6 +42,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 // Direct alias for sequence diagram: GET /api/employer/applications
 const { protect } = require('./middleware/authMiddleware');
@@ -59,10 +72,11 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
+const server = httpServer.listen(PORT, () => {
   console.log(`🚀 Job Board Server running on port ${PORT}`);
   console.log(`📡 API Endpoints available at http://localhost:${PORT}/api`);
 });
 
 // Server entry point
-module.exports = app;
+module.exports = { app, httpServer, server };
+

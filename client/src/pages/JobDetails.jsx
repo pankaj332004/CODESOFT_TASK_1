@@ -11,25 +11,39 @@ import {
   Users,
   CheckCircle2,
   ExternalLink,
+  Sparkles,
+  Flag,
 } from 'lucide-react';
 import { jobService } from '../services/jobService';
 import { formatSalary, formatTimeAgo, formatDate } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
+import ReportJobModal from '../components/ReportJobModal';
 
 const JobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, toggleSaveJob } = useAuth();
   const [job, setJob] = useState(null);
+  const [matchScore, setMatchScore] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
 
   useEffect(() => {
-    const fetchJob = async () => {
+    const fetchJobAndMatch = async () => {
       setLoading(true);
       try {
         const res = await jobService.getJobById(id);
         setJob(res.data);
+
+        // If candidate is logged in, fetch AI Match Score
+        if (user && user.role === 'candidate') {
+          jobService
+            .getJobMatchScore(id)
+            .then((mRes) => setMatchScore(mRes.data))
+            .catch(() => {});
+        }
       } catch (err) {
         setError(err.response?.data?.message || 'Job not found');
       } finally {
@@ -37,8 +51,8 @@ const JobDetails = () => {
       }
     };
 
-    fetchJob();
-  }, [id]);
+    fetchJobAndMatch();
+  }, [id, user]);
 
   const isSaved = user?.savedJobs?.some(
     (item) => (item._id || item).toString() === job?._id?.toString()
@@ -121,6 +135,14 @@ const JobDetails = () => {
 
           <div className="flex items-center gap-3 shrink-0">
             <button
+              onClick={() => setReportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-brand border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 text-xs font-semibold transition-colors"
+              title="Report this job listing"
+            >
+              <Flag size={14} />
+              <span className="hidden sm:inline">Report</span>
+            </button>
+            <button
               onClick={handleBookmark}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-brand border text-xs font-semibold transition-colors ${
                 isSaved ? 'bg-primary-light text-primary border-primary' : 'bg-white border-brandborder text-brandtext hover:bg-slate-50'
@@ -136,6 +158,7 @@ const JobDetails = () => {
               Apply Now
             </Link>
           </div>
+
         </div>
 
         {/* Content & Sidebar Layout */}
@@ -195,8 +218,148 @@ const JobDetails = () => {
             </div>
           </div>
 
-          {/* Right Column: Company & Job Overview */}
+          {/* Right Column: AI Match Score, Company & Job Overview */}
           <div className="lg:col-span-4 flex flex-col gap-6">
+            {/* AI Resume & Profile Match Score Card */}
+            {matchScore && (
+              <div className="bg-gradient-to-br from-slate-900 via-[#102d4b] to-[#0a1e33] text-white border border-emerald-500/30 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
+                    <Sparkles size={14} className="animate-pulse" />
+                    <span>AI Match Engine</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      {matchScore.match_level || 'Matched'}
+                    </span>
+                    <span className="text-2xl font-black text-emerald-300">{matchScore.score}%</span>
+                  </div>
+                </div>
+
+                {/* Overall Progress Bar */}
+                <div className="w-full bg-slate-700/60 rounded-full h-2.5 mb-3 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-emerald-500 to-teal-400 h-2.5 rounded-full transition-all duration-700"
+                    style={{ width: `${matchScore.score}%` }}
+                  />
+                </div>
+
+                <p className="text-xs text-slate-200 leading-relaxed mb-4">
+                  {matchScore.reason}
+                </p>
+
+                {/* Detailed Factor Breakdown */}
+                {matchScore.breakdown && (
+                  <div className="grid grid-cols-2 gap-2 mb-4 p-3 bg-white/5 rounded-xl border border-white/5 text-[11px]">
+                    <div>
+                      <div className="flex justify-between text-slate-300 mb-1">
+                        <span>Skills Fit</span>
+                        <strong className="text-emerald-400">{matchScore.breakdown.skills_score}%</strong>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-emerald-400 h-1.5 rounded-full"
+                          style={{ width: `${matchScore.breakdown.skills_score}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-slate-300 mb-1">
+                        <span>Role Alignment</span>
+                        <strong className="text-teal-400">{matchScore.breakdown.title_score}%</strong>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-teal-400 h-1.5 rounded-full"
+                          style={{ width: `${matchScore.breakdown.title_score}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-slate-300 mb-1">
+                        <span>Experience</span>
+                        <strong className="text-blue-400">{matchScore.breakdown.experience_score}%</strong>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-blue-400 h-1.5 rounded-full"
+                          style={{ width: `${matchScore.breakdown.experience_score}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-slate-300 mb-1">
+                        <span>Location / Type</span>
+                        <strong className="text-indigo-400">{matchScore.breakdown.location_score}%</strong>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-indigo-400 h-1.5 rounded-full"
+                          style={{ width: `${matchScore.breakdown.location_score}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Matching Skills */}
+                {(matchScore.matching_skills || matchScore.matchingSkills)?.length > 0 && (
+                  <div className="mb-3">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1.5">
+                      Matched Skills:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(matchScore.matching_skills || matchScore.matchingSkills).map((sk) => (
+                        <span
+                          key={sk}
+                          className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full"
+                        >
+                          ✓ {sk}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Missing Skills */}
+                {matchScore.missing_skills?.length > 0 && (
+                  <div className="mb-3">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block mb-1.5">
+                      Recommended to Highlight:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {matchScore.missing_skills.map((sk) => (
+                        <span
+                          key={sk}
+                          className="text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full"
+                        >
+                          + {sk}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                {matchScore.recommendations?.length > 0 && (
+                  <div className="pt-3 border-t border-white/10 space-y-1">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                      AI Tip:
+                    </span>
+                    {matchScore.recommendations.map((rec, i) => (
+                      <p key={i} className="text-[11px] text-teal-200/90 leading-tight">
+                        • {rec}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+
             {/* Company Card */}
             <div className="bg-white border border-brandborder rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-3.5 mb-3.5">
@@ -271,12 +434,33 @@ const JobDetails = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Report Listing Button in Overview */}
+              <div className="mt-5 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setReportModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-slate-400 hover:text-red-600 transition-colors py-1.5 rounded-brand hover:bg-red-50/50"
+                >
+                  <Flag size={13} />
+                  <span>Report this job listing</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      <ReportJobModal
+        job={job}
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        user={user}
+      />
     </div>
   );
 };
 
 export default JobDetails;
+

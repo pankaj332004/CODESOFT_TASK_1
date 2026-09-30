@@ -235,6 +235,7 @@ const createJob = async (req, res) => {
 
     if (store.isUsingMongo) {
       const job = await Job.create(jobData);
+      notifyJobAlertSubscribers(job).catch(console.error);
       return res.status(201).json({ success: true, data: job });
     } else {
       const newJob = {
@@ -242,6 +243,7 @@ const createJob = async (req, res) => {
         ...jobData,
       };
       store.jobs.unshift(newJob);
+      notifyJobAlertSubscribers(newJob).catch(console.error);
       return res.status(201).json({ success: true, data: newJob });
     }
   } catch (error) {
@@ -249,6 +251,68 @@ const createJob = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+const notifyJobAlertSubscribers = async (job) => {
+  try {
+    const User = require('../models/User');
+    const { sendEmail } = require('../services/emailService');
+    const { sendRealtimeNotification } = require('../socket');
+
+    let candidateUsers = [];
+    if (store.isUsingMongo) {
+      candidateUsers = await User.find({ 'jobAlerts.0': { $exists: true } }).lean();
+    } else {
+      candidateUsers = (store.users || []).filter(
+        (u) => u.jobAlerts && u.jobAlerts.length > 0
+      );
+    }
+
+    for (const user of candidateUsers) {
+      const match = (user.jobAlerts || []).find((alert) => {
+        const titleMatch =
+          alert.title &&
+          job.title.toLowerCase().includes(alert.title.toLowerCase());
+        const catMatch =
+          alert.category &&
+          alert.category !== 'All' &&
+          job.category.toLowerCase() === alert.category.toLowerCase();
+        return titleMatch || catMatch;
+      });
+
+      if (match) {
+        sendRealtimeNotification({
+          recipientId: user._id,
+          title: '🔔 Job Alert Match',
+          message: `New job matching your alert: "${job.title}" at ${job.company}`,
+          type: 'alert',
+          link: `/jobs/${job._id}`,
+        }).catch(console.error);
+
+        sendEmail({
+          to: user.email,
+          subject: `Job Alert: ${job.title} at ${job.company}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #17324f;">
+              <h2 style="color: #1288e8;">New Job Alert Match!</h2>
+              <p>Hello ${user.name},</p>
+              <p>A new job matching your alert was posted:</p>
+              <div style="background-color: #f8fafc; border-left: 4px solid #1288e8; padding: 12px 16px; margin: 16px 0;">
+                <h3 style="margin: 0 0 6px 0;">${job.title}</h3>
+                <p style="margin: 4px 0;"><strong>Company:</strong> ${job.company}</p>
+                <p style="margin: 4px 0;"><strong>Location:</strong> ${job.location}</p>
+                <p style="margin: 4px 0;"><strong>Type:</strong> ${job.type}</p>
+              </div>
+              <p><a href="http://localhost:5173/jobs/${job._id}" style="background-color: #1288e8; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block;">View Job</a></p>
+            </div>
+          `,
+        }).catch(console.error);
+      }
+    }
+  } catch (err) {
+    console.error('notifyJobAlertSubscribers error:', err.message);
+  }
+};
+
 
 // @desc    Update a job posting
 // @route   PUT /api/jobs/:id
@@ -372,6 +436,109 @@ const getEmployerJobs = async (req, res) => {
   }
 };
 
+// @desc    Get AI recommended jobs for logged-in candidate
+// @route   GET /api/jobs/recommended
+// @access  Private (Candidate)
+const getRecommendedJobsForCandidate = async (req, res) => {
+  try {
+    const candidate = req.user;
+    let allJobs = [];
+
+    if (store.isUsingMongo) {
+      allJobs = await Job.find({}).lean();
+    } else {
+      allJobs = store.jobs;
+    }
+
+    const { getRecommendedJobs } = require('../services/aiMatchingService');
+    const recommended = await getRecommendedJobs(candidate, allJobs);
+
+    return res.json({
+      success: true,
+      count: recommended.length,
+      data: recommended,
+    });
+  } catch (error) {
+    console.error('getRecommendedJobs error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get AI match score for a specific job against candidate
+// @route   GET /api/jobs/:id/match
+// @access  Private
+const getJobMatchScore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let job;
+
+    if (store.isUsingMongo) {
+      job = await Job.findById(id).lean();
+    } else {
+      job = store.jobs.find((j) => j._id.toString() === id.toString());
+    }
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    const { calculateJobMatch } = require('../services/aiMatchingService');
+    const match = await calculateJobMatch(req.user, job);
+
+    return res.json({
+      success: true,
+      data: match,
+    });
+  } catch (error) {
+    console.error('getJobMatchScore error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Report a job listing
+// @route   POST /api/jobs/:id/report
+// @access  Public
+const reportJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason, details, reporterEmail } = req.body;
+
+    if (!reason || !details) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide reason and details for reporting this job',
+      });
+    }
+
+    const JobReport = require('../models/JobReport');
+
+    const reportData = {
+      job: id,
+      reporter: req.user?._id || null,
+      reporterEmail: reporterEmail || req.user?.email || 'Anonymous Visitor',
+      reason,
+      details,
+      status: 'Pending',
+      createdAt: new Date(),
+    };
+
+    if (store.isUsingMongo) {
+      await JobReport.create(reportData);
+    } else {
+      if (!store.jobReports) store.jobReports = [];
+      store.jobReports.push({ _id: 'report-' + Date.now(), ...reportData });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Job report received. Our moderation team will review this listing shortly.',
+    });
+  } catch (error) {
+    console.error('reportJob error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getJobs,
   getJobById,
@@ -379,4 +546,7 @@ module.exports = {
   updateJob,
   deleteJob,
   getEmployerJobs,
+  getRecommendedJobsForCandidate,
+  getJobMatchScore,
+  reportJob,
 };

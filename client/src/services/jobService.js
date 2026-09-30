@@ -30,4 +30,20 @@ export const jobService = {
     const res = await api.get('/jobs/employer/my-jobs');
     return res.data;
   },
+
+  getRecommendedJobs: async () => {
+    const res = await api.get('/jobs/recommended');
+    return res.data;
+  },
+
+  getJobMatchScore: async (id) => {
+    const res = await api.get(`/jobs/${id}/match`);
+    return res.data;
+  },
+
+  reportJob: async (id, reportData) => {
+    const res = await api.post(`/jobs/${id}/report`, reportData);
+    return res.data;
+  },
 };
+

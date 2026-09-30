@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, AlertCircle, UserCheck, Briefcase } from 'lucide-react';
+import { Mail, Lock, AlertCircle, UserCheck, Briefcase, Shield } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 const Login = () => {
@@ -27,7 +27,13 @@ const Login = () => {
       if (redirectPath) {
         navigate(redirectPath);
       } else {
-        navigate(res.data?.role === 'employer' ? '/employer' : '/candidate');
+        if (res.data?.role === 'admin') {
+          navigate('/admin');
+        } else if (res.data?.role === 'employer') {
+          navigate('/employer');
+        } else {
+          navigate('/candidate');
+        }
       }
     } catch (err) {
       setError(
@@ -43,11 +49,15 @@ const Login = () => {
     if (demoRole === 'candidate') {
       setEmail('john@example.com');
       setPassword('password123');
-    } else {
+    } else if (demoRole === 'employer') {
       setEmail('jane@employer.com');
+      setPassword('password123');
+    } else if (demoRole === 'admin') {
+      setEmail('admin@jobboard.com');
       setPassword('password123');
     }
   };
+
 
   return (
     <div className="min-h-[calc(100vh-160px)] flex items-center justify-center p-6 bg-brandbg text-left">
@@ -61,27 +71,39 @@ const Login = () => {
         <div className="flex bg-slate-100 p-1 rounded-brand mb-6 gap-1">
           <button
             type="button"
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-brand transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-brand transition-all ${
               role === 'candidate'
                 ? 'bg-primary text-white shadow-sm'
                 : 'text-brandtext-light hover:text-brandtext'
             }`}
             onClick={() => setRole('candidate')}
           >
-            <UserCheck size={15} />
+            <UserCheck size={14} />
             <span>Candidate</span>
           </button>
           <button
             type="button"
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-brand transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-brand transition-all ${
               role === 'employer'
                 ? 'bg-primary text-white shadow-sm'
                 : 'text-brandtext-light hover:text-brandtext'
             }`}
             onClick={() => setRole('employer')}
           >
-            <Briefcase size={15} />
+            <Briefcase size={14} />
             <span>Employer</span>
+          </button>
+          <button
+            type="button"
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-brand transition-all ${
+              role === 'admin'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-brandtext-light hover:text-brandtext'
+            }`}
+            onClick={() => setRole('admin')}
+          >
+            <Shield size={14} />
+            <span>Admin</span>
           </button>
         </div>
 
@@ -142,7 +164,7 @@ const Login = () => {
           <span className="text-[11px] font-bold text-brandmuted block mb-2 uppercase tracking-wider">
             Quick Demo Autofill
           </span>
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center flex-wrap">
             <button
               type="button"
               onClick={() => fillDemoAccount('candidate')}
@@ -157,8 +179,16 @@ const Login = () => {
             >
               Employer Demo
             </button>
+            <button
+              type="button"
+              onClick={() => fillDemoAccount('admin')}
+              className="px-2.5 py-1 text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 rounded hover:bg-purple-100 transition-colors"
+            >
+              Admin Demo
+            </button>
           </div>
         </div>
+
 
         <div className="flex items-center my-5 text-xs text-brandmuted font-semibold">
           <span className="flex-1 border-b border-brandborder"></span>

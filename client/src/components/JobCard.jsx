@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bookmark, MapPin, Clock } from 'lucide-react';
+import { Bookmark, MapPin, Clock, Sparkles } from 'lucide-react';
 import { formatSalary, formatTimeAgo } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
 
@@ -29,7 +29,25 @@ const JobCard = ({ job, layout = 'grid' }) => {
   };
 
   return (
-    <div className="bg-white border border-brandborder rounded-xl p-5 flex flex-col transition-all duration-200 hover:border-primary/40 hover:shadow-card hover:-translate-y-0.5 text-left">
+    <div className="bg-white border border-brandborder rounded-xl p-5 flex flex-col transition-all duration-200 hover:border-primary/40 hover:shadow-card hover:-translate-y-0.5 text-left relative overflow-hidden">
+      {/* AI Match Badge Banner */}
+      {job.aiMatch && (
+        <div className="mb-3 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 px-3 py-1 rounded-lg">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+            <Sparkles size={14} className="text-emerald-600 fill-emerald-500 animate-pulse" />
+            <span>{job.aiMatch.score}% Match</span>
+            <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider bg-emerald-100/70 px-1.5 py-0.2 rounded">
+              {job.aiMatch.matchLevel}
+            </span>
+          </div>
+          {job.aiMatch.matchingSkills?.length > 0 && (
+            <span className="text-[10px] text-emerald-700 font-medium truncate max-w-[130px] hidden sm:inline">
+              {job.aiMatch.matchingSkills.slice(0, 2).join(' • ')}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex items-start gap-3.5 mb-3.5">
         {/* Company Logo */}
         <div className="w-12 h-12 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 p-1">

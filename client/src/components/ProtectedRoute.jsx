@@ -19,9 +19,11 @@ const ProtectedRoute = ({ children, role }) => {
   }
 
   if (role && user?.role !== role) {
-    // If employer trying to view candidate page or vice versa
-    return <Navigate to={user?.role === 'employer' ? '/employer' : '/candidate'} replace />;
+    if (user?.role === 'admin') return <Navigate to="/admin" replace />;
+    if (user?.role === 'employer') return <Navigate to="/employer" replace />;
+    return <Navigate to="/candidate" replace />;
   }
+
 
   return children;
 };

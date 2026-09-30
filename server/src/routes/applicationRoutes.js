@@ -5,6 +5,8 @@ const {
   getCandidateApplications,
   getEmployerApplications,
   updateApplicationStatus,
+  scheduleInterview,
+  getMyInterviews,
 } = require('../controllers/applicationController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
@@ -23,6 +25,12 @@ router.get(
   protect,
   authorize('candidate'),
   getCandidateApplications
+);
+
+router.get(
+  '/my-interviews',
+  protect,
+  getMyInterviews
 );
 
 router.get(
@@ -45,6 +53,13 @@ router.patch(
   protect,
   authorize('employer'),
   updateApplicationStatus
+);
+
+router.post(
+  '/:id/schedule-interview',
+  protect,
+  authorize('employer'),
+  scheduleInterview
 );
 
 module.exports = router;

@@ -1,22 +1,23 @@
 import api from './api';
 
 export const userService = {
-  getProfile: () => api.get('/users/profile'),
-  updateProfile: (data) => api.put('/users/profile', data),
-  uploadAvatar: (formData) =>
-    api.post('/users/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }),
-  uploadResume: (formData) =>
-    api.post('/users/resume', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }),
-  toggleSaveJob: (jobId) => api.post(`/users/save-job/${jobId}`),
-  updatePassword: (passwordData) => api.put('/users/password', passwordData),
-};
+  getSavedJobs: async () => {
+    const res = await api.get('/users/saved-jobs');
+    return res.data;
+  },
 
-export default userService;
+  getJobAlerts: async () => {
+    const res = await api.get('/users/job-alerts');
+    return res.data;
+  },
+
+  createJobAlert: async (alertData) => {
+    const res = await api.post('/users/job-alerts', alertData);
+    return res.data;
+  },
+
+  deleteJobAlert: async (alertId) => {
+    const res = await api.delete(`/users/job-alerts/${alertId}`);
+    return res.data;
+  },
+};

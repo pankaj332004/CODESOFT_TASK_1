@@ -8,33 +8,44 @@ import {
   ArrowRight,
   Briefcase,
   Search,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
 import { applicationService } from '../services/applicationService';
+import { jobService } from '../services/jobService';
 import { useAuth } from '../hooks/useAuth';
 import ApplicationRow from '../components/ApplicationRow';
+import JobCard from '../components/JobCard';
 
 const CandidateDashboard = () => {
   const { user } = useAuth();
   const [applications, setApplications] = useState([]);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingRecs, setLoadingRecs] = useState(true);
 
   useEffect(() => {
-    const fetchApplications = async () => {
+    const fetchData = async () => {
       try {
-        const res = await applicationService.getCandidateApplications();
-        setApplications(res.data || []);
+        const [appRes, recRes] = await Promise.all([
+          applicationService.getCandidateApplications(),
+          jobService.getRecommendedJobs().catch(() => ({ data: [] })),
+        ]);
+        setApplications(appRes.data || []);
+        setRecommendedJobs(recRes.data || []);
       } catch (err) {
-        console.error('Failed to fetch candidate applications:', err);
+        console.error('Failed to fetch dashboard data:', err);
       } finally {
         setLoading(false);
+        setLoadingRecs(false);
       }
     };
 
-    fetchApplications();
+    fetchData();
   }, []);
 
   const interviewsCount = applications.filter((a) => a.status === 'Interview').length;
-  const offersCount = applications.filter((a) => a.status === 'Offer').length;
+  const offersCount = applications.filter((a) => a.status === 'Offer' || a.status === 'Hired').length;
   const savedCount = user?.savedJobs?.length || 0;
 
   return (
@@ -43,7 +54,7 @@ const CandidateDashboard = () => {
         <div>
           <h1 className="text-2xl font-extrabold text-brandtext leading-tight">Candidate Dashboard</h1>
           <p className="text-xs text-brandmuted mt-0.5">
-            Welcome back, {user?.name}! Track your applications and interview progress.
+            Welcome back, {user?.name}! Track your applications and AI-matched recommendations.
           </p>
         </div>
 
@@ -73,7 +84,7 @@ const CandidateDashboard = () => {
             <CalendarCheck size={22} />
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-extrabold text-brandtext leading-none">{interviewsCount || 3}</span>
+            <span className="text-2xl font-extrabold text-brandtext leading-none">{interviewsCount}</span>
             <span className="text-xs text-brandmuted font-medium mt-1">Interviews</span>
           </div>
         </div>
@@ -83,7 +94,7 @@ const CandidateDashboard = () => {
             <Award size={22} />
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-extrabold text-brandtext leading-none">{offersCount || 1}</span>
+            <span className="text-2xl font-extrabold text-brandtext leading-none">{offersCount}</span>
             <span className="text-xs text-brandmuted font-medium mt-1">Offers</span>
           </div>
         </div>
@@ -93,10 +104,57 @@ const CandidateDashboard = () => {
             <Bookmark size={22} />
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-extrabold text-brandtext leading-none">{savedCount || 5}</span>
+            <span className="text-2xl font-extrabold text-brandtext leading-none">{savedCount}</span>
             <span className="text-xs text-brandmuted font-medium mt-1">Saved Jobs</span>
           </div>
         </div>
+      </div>
+
+      {/* AI Matching & Recommended Jobs Section */}
+      <div className="bg-gradient-to-br from-slate-900 to-[#102a45] rounded-2xl p-6 sm:p-7 text-white shadow-lg relative overflow-hidden border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-brand bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400">
+              <Sparkles size={20} className="animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-base sm:text-lg text-white">AI-Recommended Jobs For You</h3>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                  AI Match Active
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Personalized matching engine analyzes your skills, experience, and resume keywords.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/candidate/profile"
+            className="text-xs font-semibold text-sky-300 hover:text-sky-200 transition-colors flex items-center gap-1 shrink-0 self-start sm:self-auto"
+          >
+            <span>Update Profile Skills</span>
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        {loadingRecs ? (
+          <div className="py-10 text-center flex flex-col items-center gap-2 text-slate-300">
+            <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-medium">Analyzing jobs & calculating match scores...</span>
+          </div>
+        ) : recommendedJobs.length === 0 ? (
+          <div className="py-8 text-center text-slate-300 text-xs">
+            No job matches found yet. Add more details to your profile to boost matching precision.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recommendedJobs.slice(0, 3).map((job) => (
+              <JobCard key={job._id} job={job} layout="grid" />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recent Applications Section */}

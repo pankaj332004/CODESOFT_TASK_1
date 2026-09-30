@@ -61,4 +61,50 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const optionalProtect = async (req, res, next) => {
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'job_board_jwt_secret_key_987654321'
+    );
+
+    if (User.findById) {
+      try {
+        const user = await User.findById(decoded.id).select('-password');
+        if (user) {
+          req.user = user;
+          return next();
+        }
+      } catch (err) {}
+    }
+
+    if (global.__IN_MEMORY_STORE__ && global.__IN_MEMORY_STORE__.users) {
+      const user = global.__IN_MEMORY_STORE__.users.find(
+        (u) => u._id.toString() === decoded.id.toString()
+      );
+      if (user) {
+        const { password, ...userWithoutPassword } = user;
+        req.user = userWithoutPassword;
+      }
+    }
+  } catch (error) {
+    // If token is invalid or expired, continue as guest
+  }
+
+  next();
+};
+
+module.exports = { protect, optionalProtect };
+

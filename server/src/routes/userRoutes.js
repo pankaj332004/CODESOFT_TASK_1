@@ -4,6 +4,10 @@ const {
   getProfile,
   updateProfile,
   toggleSaveJob,
+  getSavedJobs,
+  getJobAlerts,
+  createJobAlert,
+  deleteJobAlert,
   uploadAvatar: uploadAvatarController,
   uploadResumeFile,
   updatePassword,
@@ -15,6 +19,10 @@ router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 router.put('/password', protect, updatePassword);
 router.post('/save-job/:jobId', protect, toggleSaveJob);
+router.get('/saved-jobs', protect, getSavedJobs);
+router.get('/job-alerts', protect, getJobAlerts);
+router.post('/job-alerts', protect, createJobAlert);
+router.delete('/job-alerts/:alertId', protect, deleteJobAlert);
 router.post('/avatar', protect, uploadAvatar.single('avatar'), uploadAvatarController);
 router.post('/resume', protect, uploadResume.single('resume'), uploadResumeFile);
 

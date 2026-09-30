@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Job = require('../models/Job');
@@ -138,6 +139,108 @@ const toggleSaveJob = async (req, res) => {
     }
   } catch (error) {
     console.error('toggleSaveJob error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get user's saved jobs
+// @route   GET /api/users/saved-jobs
+// @access  Private
+const getSavedJobs = async (req, res) => {
+  try {
+    const userId = req.user._id.toString();
+
+    if (store.isUsingMongo) {
+      const user = await User.findById(userId).populate('savedJobs');
+      return res.json({ success: true, data: user?.savedJobs || [] });
+    } else {
+      const user = store.users.find((u) => u._id.toString() === userId);
+      const savedIds = (user?.savedJobs || []).map((id) => (id._id || id).toString());
+      const jobs = store.jobs.filter((j) => savedIds.includes(j._id.toString()));
+      return res.json({ success: true, data: jobs });
+    }
+  } catch (error) {
+    console.error('getSavedJobs error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get user's job alerts
+// @route   GET /api/users/job-alerts
+// @access  Private
+const getJobAlerts = async (req, res) => {
+  try {
+    const userId = req.user._id.toString();
+    if (store.isUsingMongo) {
+      const user = await User.findById(userId);
+      return res.json({ success: true, data: user?.jobAlerts || [] });
+    } else {
+      const user = store.users.find((u) => u._id.toString() === userId);
+      return res.json({ success: true, data: user?.jobAlerts || [] });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Create job alert
+// @route   POST /api/users/job-alerts
+// @access  Private
+const createJobAlert = async (req, res) => {
+  try {
+    const userId = req.user._id.toString();
+    const { keyword, category, location, frequency } = req.body;
+
+    const newAlert = {
+      _id: new mongoose.Types.ObjectId().toString(),
+      keyword: keyword || '',
+      category: category || 'All',
+      location: location || 'Anywhere',
+      frequency: frequency || 'Weekly',
+      active: true,
+      createdAt: new Date(),
+    };
+
+    if (store.isUsingMongo) {
+      const user = await User.findById(userId);
+      if (!user.jobAlerts) user.jobAlerts = [];
+      user.jobAlerts.unshift(newAlert);
+      await user.save();
+      return res.status(201).json({ success: true, data: user.jobAlerts });
+    } else {
+      const user = store.users.find((u) => u._id.toString() === userId);
+      if (!user.jobAlerts) user.jobAlerts = [];
+      user.jobAlerts.unshift(newAlert);
+      return res.status(201).json({ success: true, data: user.jobAlerts });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete job alert
+// @route   DELETE /api/users/job-alerts/:alertId
+// @access  Private
+const deleteJobAlert = async (req, res) => {
+  try {
+    const userId = req.user._id.toString();
+    const { alertId } = req.params;
+
+    if (store.isUsingMongo) {
+      const user = await User.findById(userId);
+      if (user?.jobAlerts) {
+        user.jobAlerts = user.jobAlerts.filter((a) => a._id.toString() !== alertId);
+        await user.save();
+      }
+      return res.json({ success: true, data: user?.jobAlerts || [] });
+    } else {
+      const user = store.users.find((u) => u._id.toString() === userId);
+      if (user?.jobAlerts) {
+        user.jobAlerts = user.jobAlerts.filter((a) => a._id.toString() !== alertId);
+      }
+      return res.json({ success: true, data: user?.jobAlerts || [] });
+    }
+  } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -290,6 +393,10 @@ module.exports = {
   getProfile,
   updateProfile,
   toggleSaveJob,
+  getSavedJobs,
+  getJobAlerts,
+  createJobAlert,
+  deleteJobAlert,
   uploadAvatar,
   uploadResumeFile,
   updatePassword,

@@ -29,4 +29,17 @@ export const applicationService = {
     });
     return res.data;
   },
+
+  scheduleInterview: async (applicationId, interviewData) => {
+    const res = await api.post(
+      `/applications/${applicationId}/schedule-interview`,
+      interviewData
+    );
+    return res.data;
+  },
+
+  getMyInterviews: async () => {
+    const res = await api.get('/applications/my-interviews');
+    return res.data;
+  },
 };

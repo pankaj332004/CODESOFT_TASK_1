@@ -40,7 +40,21 @@ const initialUsers = [
     savedJobs: [],
     createdAt: new Date('2024-01-05T10:00:00Z'),
   },
+  {
+    _id: '6601a0000000000000000003',
+    name: 'Admin Supervisor',
+    email: 'admin@jobboard.com',
+    password: '$2b$10$H4ZLjVSfsCLZ2OYNuhJo9.ly/l/y2ynaL1A4CfUF5R3TOZ/KOJDoK', // 'password123'
+    role: 'admin',
+    phone: '+1 800 555 0199',
+    location: 'San Francisco, CA',
+    bio: 'Platform Administrator & Content Moderation Lead.',
+    profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    savedJobs: [],
+    createdAt: new Date('2024-01-01T10:00:00Z'),
+  },
 ];
+
 
 const initialJobs = [
   {
@@ -296,7 +310,17 @@ const connectDB = async () => {
       await Job.insertMany(initialJobs);
       await Application.insertMany(initialApplications);
       console.log('✅ Initial database seed completed!');
+    } else {
+      const adminExists = await User.findOne({ role: 'admin' });
+      if (!adminExists) {
+        const adminSeed = initialUsers.find((u) => u.role === 'admin');
+        if (adminSeed) {
+          await User.create(adminSeed);
+          console.log('👑 Admin user initialized in database: admin@jobboard.com');
+        }
+      }
     }
+
   } catch (error) {
     console.warn(`⚠️  MongoDB connection skipped (${error.message}).`);
     console.log(`🚀 Operating in High-Performance Local In-Memory Store mode with full CRUD capability.`);

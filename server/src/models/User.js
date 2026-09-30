@@ -21,9 +21,10 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['candidate', 'employer'],
+      enum: ['candidate', 'employer', 'admin'],
       default: 'candidate',
     },
+
     phone: {
       type: String,
       default: '',
@@ -56,6 +57,20 @@ const userSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Job',
+      },
+    ],
+    skills: {
+      type: [String],
+      default: ['React', 'JavaScript', 'Node.js'],
+    },
+    jobAlerts: [
+      {
+        keyword: { type: String, default: '' },
+        category: { type: String, default: '' },
+        location: { type: String, default: '' },
+        frequency: { type: String, default: 'Weekly' },
+        active: { type: Boolean, default: true },
+        createdAt: { type: Date, default: Date.now },
       },
     ],
   },
