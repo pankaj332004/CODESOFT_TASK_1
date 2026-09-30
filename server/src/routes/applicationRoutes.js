@@ -32,6 +32,14 @@ router.get(
   getEmployerApplications
 );
 
+// Alias route matching architecture diagram: GET /api/applications/employer/applications
+router.get(
+  '/employer/applications',
+  protect,
+  authorize('employer'),
+  getEmployerApplications
+);
+
 router.patch(
   '/:id/status',
   protect,

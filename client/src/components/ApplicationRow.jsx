@@ -49,8 +49,10 @@ const ApplicationRow = ({
             onChange={(e) => onStatusChange?.(application._id, e.target.value)}
           >
             <option value="Applied">Applied</option>
+            <option value="Shortlisted">Shortlisted</option>
             <option value="Under Review">Under Review</option>
             <option value="Interview">Interview</option>
+            <option value="Hired">Hired</option>
             <option value="Offer">Offer</option>
             <option value="Rejected">Rejected</option>
           </select>

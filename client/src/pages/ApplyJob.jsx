@@ -108,6 +108,16 @@ const ApplyJob = () => {
     }
   };
 
+  useEffect(() => {
+    let timer;
+    if (success) {
+      timer = setTimeout(() => {
+        navigate('/candidate/applications');
+      }, 3000);
+    }
+    return () => clearTimeout(timer);
+  }, [success, navigate]);
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
@@ -132,8 +142,11 @@ const ApplyJob = () => {
               <CheckCircle size={48} className="text-success" />
             </div>
             <h2 className="text-2xl font-extrabold text-brandtext mb-2">Application Submitted!</h2>
-            <p className="text-xs sm:text-sm text-brandmuted leading-relaxed mb-6">
+            <p className="text-xs sm:text-sm text-brandmuted leading-relaxed mb-4">
               Your application for <strong className="text-brandtext">{job?.title}</strong> at <strong className="text-brandtext">{job?.company}</strong> has been transmitted. We've sent a confirmation email to <strong className="text-brandtext">{formData.email}</strong>.
+            </p>
+            <p className="text-xs text-primary font-semibold mb-6 flex items-center gap-1.5 animate-pulse">
+              <span>Redirecting to your Dashboard in 3 seconds...</span>
             </p>
             <div className="flex gap-3 flex-wrap justify-center">
               <Link to="/candidate/applications" className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-brand font-semibold text-xs transition-colors">

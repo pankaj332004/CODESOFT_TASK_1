@@ -208,9 +208,14 @@ const getEmployerApplications = async (req, res) => {
         activeJobs: employerJobs.length,
         totalApplications: applications.length,
         shortlisted: applications.filter(
-          (a) => a.status === 'Interview' || a.status === 'Under Review'
+          (a) =>
+            a.status === 'Shortlisted' ||
+            a.status === 'Interview' ||
+            a.status === 'Under Review'
         ).length,
-        hired: applications.filter((a) => a.status === 'Offer').length,
+        hired: applications.filter(
+          (a) => a.status === 'Hired' || a.status === 'Offer'
+        ).length,
       };
 
       return res.json({
@@ -252,9 +257,14 @@ const getEmployerApplications = async (req, res) => {
         activeJobs: employerJobs.length,
         totalApplications: applications.length,
         shortlisted: applications.filter(
-          (a) => a.status === 'Interview' || a.status === 'Under Review'
+          (a) =>
+            a.status === 'Shortlisted' ||
+            a.status === 'Interview' ||
+            a.status === 'Under Review'
         ).length,
-        hired: applications.filter((a) => a.status === 'Offer').length,
+        hired: applications.filter(
+          (a) => a.status === 'Hired' || a.status === 'Offer'
+        ).length,
       };
 
       return res.json({
@@ -277,7 +287,15 @@ const updateApplicationStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['Applied', 'Under Review', 'Interview', 'Offer', 'Rejected'];
+    const validStatuses = [
+      'Applied',
+      'Shortlisted',
+      'Under Review',
+      'Interview',
+      'Hired',
+      'Offer',
+      'Rejected',
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,

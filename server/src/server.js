@@ -34,6 +34,12 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/users', userRoutes);
 
+// Direct alias for sequence diagram: GET /api/employer/applications
+const { protect } = require('./middleware/authMiddleware');
+const { authorize } = require('./middleware/roleMiddleware');
+const { getEmployerApplications } = require('./controllers/applicationController');
+app.get('/api/employer/applications', protect, authorize('employer'), getEmployerApplications);
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({

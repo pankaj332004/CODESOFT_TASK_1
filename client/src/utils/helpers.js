@@ -42,10 +42,13 @@ export const getStatusBadgeClass = (status) => {
   switch (status?.toLowerCase()) {
     case 'applied':
       return 'bg-sky-100 text-sky-700 border border-sky-200';
+    case 'shortlisted':
+      return 'bg-purple-100 text-purple-700 border border-purple-200';
     case 'under review':
       return 'bg-amber-100 text-amber-800 border border-amber-200';
     case 'interview':
       return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+    case 'hired':
     case 'offer':
       return 'bg-green-100 text-green-800 border border-green-200';
     case 'rejected':
