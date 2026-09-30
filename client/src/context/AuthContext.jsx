@@ -62,6 +62,34 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const uploadAvatar = async (file) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const res = await api.post('/users/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    if (res.data?.profileImage) {
+      const updated = { ...user, profileImage: res.data.profileImage };
+      setUser(updated);
+      localStorage.setItem('job_board_user', JSON.stringify(updated));
+    }
+    return res.data;
+  };
+
+  const uploadResume = async (file) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+    const res = await api.post('/users/resume', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    if (res.data?.resume) {
+      const updated = { ...user, resume: res.data.resume };
+      setUser(updated);
+      localStorage.setItem('job_board_user', JSON.stringify(updated));
+    }
+    return res.data;
+  };
+
   const toggleSaveJob = async (jobId) => {
     if (!user) return false;
     try {
@@ -87,6 +115,8 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateProfile,
+        uploadAvatar,
+        uploadResume,
         toggleSaveJob,
         isAuthenticated: !!user,
         isEmployer: user?.role === 'employer',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Briefcase, Menu, X, User, LogOut, ChevronDown, PlusCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -7,8 +7,13 @@ const Navbar = () => {
   const { user, isAuthenticated, isEmployer, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    setImgError(false);
+  }, [user?.profileImage]);
 
   const handleLogout = () => {
     logout();
@@ -69,8 +74,13 @@ const Navbar = () => {
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               >
                 <div className="w-8 h-8 rounded-full bg-primary-light text-primary font-bold flex items-center justify-center text-xs overflow-hidden">
-                  {user?.profileImage ? (
-                    <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                  {user?.profileImage && !imgError ? (
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                      onError={() => setImgError(true)}
+                    />
                   ) : (
                     <span>{user?.name?.charAt(0) || 'U'}</span>
                   )}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -16,6 +16,11 @@ import { useAuth } from '../hooks/useAuth';
 const DashboardSidebar = () => {
   const { user, logout, isEmployer } = useAuth();
   const navigate = useNavigate();
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [user?.profileImage]);
 
   const handleLogout = () => {
     logout();
@@ -34,8 +39,13 @@ const DashboardSidebar = () => {
       {/* User profile summary */}
       <div className="flex flex-col items-center text-center pb-4 border-b border-brandborder mb-4">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-light to-blue-200 text-primary font-extrabold text-xl flex items-center justify-center mb-2.5 overflow-hidden border-2 border-white shadow-sm">
-          {user?.profileImage ? (
-            <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+          {user?.profileImage && !imgError ? (
+            <img
+              src={user.profileImage}
+              alt={user.name}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
           ) : (
             <span>{user?.name?.charAt(0) || 'U'}</span>
           )}

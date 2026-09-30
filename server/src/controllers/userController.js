@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Job = require('../models/Job');
 const { store } = require('../config/db');
@@ -141,8 +142,157 @@ const toggleSaveJob = async (req, res) => {
   }
 };
 
+// @desc    Upload avatar / profile image
+// @route   POST /api/users/avatar
+// @access  Private
+const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Please select an image file to upload' });
+    }
+
+    const userId = req.user._id.toString();
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+    if (store.isUsingMongo) {
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { profileImage: avatarUrl },
+        { new: true }
+      ).select('-password');
+      return res.json({ success: true, profileImage: avatarUrl, data: user });
+    } else {
+      const userIndex = store.users.findIndex((u) => u._id.toString() === userId);
+      if (userIndex !== -1) {
+        store.users[userIndex].profileImage = avatarUrl;
+      }
+      return res.json({
+        success: true,
+        profileImage: avatarUrl,
+        data: store.users[userIndex] || { profileImage: avatarUrl },
+      });
+    }
+  } catch (error) {
+    console.error('uploadAvatar error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Upload default resume in user profile
+// @route   POST /api/users/resume
+// @access  Private
+const uploadResumeFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Please select a resume file (PDF, DOC, DOCX)' });
+    }
+
+    const userId = req.user._id.toString();
+    const resumeUrl = `/uploads/resumes/${req.file.filename}`;
+    const originalName = req.file.originalname;
+
+    if (store.isUsingMongo) {
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { resume: resumeUrl },
+        { new: true }
+      ).select('-password');
+      return res.json({ success: true, resume: resumeUrl, originalName, data: user });
+    } else {
+      const userIndex = store.users.findIndex((u) => u._id.toString() === userId);
+      if (userIndex !== -1) {
+        store.users[userIndex].resume = resumeUrl;
+      }
+      return res.json({
+        success: true,
+        resume: resumeUrl,
+        originalName,
+        data: store.users[userIndex] || { resume: resumeUrl },
+      });
+    }
+  } catch (error) {
+    console.error('uploadResumeFile error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update user password
+// @route   PUT /api/users/password
+// @access  Private
+const updatePassword = async (req, res) => {
+  try {
+    const userId = req.user._id.toString();
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both current and new password',
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long',
+      });
+    }
+
+    if (confirmPassword && newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirmation do not match',
+      });
+    }
+
+    let user;
+    if (store.isUsingMongo) {
+      user = await User.findById(userId);
+    } else {
+      user = store.users.find((u) => u._id.toString() === userId);
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect',
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    if (store.isUsingMongo) {
+      user.password = hashedPassword;
+      await user.save();
+    } else {
+      user.password = hashedPassword;
+    }
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (error) {
+    console.error('updatePassword error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
   toggleSaveJob,
+  uploadAvatar,
+  uploadResumeFile,
+  updatePassword,
 };
+
+
