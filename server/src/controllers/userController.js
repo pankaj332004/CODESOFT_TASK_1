@@ -152,7 +152,7 @@ const uploadAvatar = async (req, res) => {
     }
 
     const userId = req.user._id.toString();
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    const avatarUrl = req.file.path || req.file.secure_url;
 
     if (store.isUsingMongo) {
       const user = await User.findByIdAndUpdate(
@@ -188,7 +188,7 @@ const uploadResumeFile = async (req, res) => {
     }
 
     const userId = req.user._id.toString();
-    const resumeUrl = `/uploads/resumes/${req.file.filename}`;
+    const resumeUrl = req.file.path || req.file.secure_url;
     const originalName = req.file.originalname;
 
     if (store.isUsingMongo) {

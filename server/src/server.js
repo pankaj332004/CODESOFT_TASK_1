@@ -64,4 +64,5 @@ const server = app.listen(PORT, () => {
   console.log(`📡 API Endpoints available at http://localhost:${PORT}/api`);
 });
 
+// Server entry point
 module.exports = app;

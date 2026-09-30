@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 const Application = require('../models/Application');
 const Job = require('../models/Job');
 const User = require('../models/User');
+const path = require('path');
 const { store } = require('../config/db');
+const { uploadStreamToCloudinary } = require('../config/cloudinary');
 const {
   sendApplicationNotification,
   sendStatusUpdateNotification,
@@ -20,16 +22,17 @@ const applyJob = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Job ID is required' });
     }
 
-    // Determine resume path
+    // Determine resume path (Cloudinary Cloud Storage via Multer)
     let resumePath = '';
     if (req.file) {
-      resumePath = `/uploads/resumes/${req.file.filename}`;
+      resumePath = req.file.path || req.file.secure_url;
     } else if (req.body.resume) {
       resumePath = req.body.resume;
     } else if (req.user && req.user.resume) {
       resumePath = req.user.resume;
     } else {
-      resumePath = 'resume-default.pdf';
+      resumePath =
+        'https://res.cloudinary.com/demo/raw/upload/v1/job_board/resumes/resume-default.pdf';
     }
 
     let targetJob;
