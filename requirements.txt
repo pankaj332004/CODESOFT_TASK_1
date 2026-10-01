@@ -1,0 +1,3 @@
+# Python AI Microservice Dependencies (Job Board)
+# Run from repository root or inside ai_service/
+-r ai_service/requirements.txt

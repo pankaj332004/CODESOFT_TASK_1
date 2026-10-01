@@ -7,6 +7,8 @@ const {
   updateApplicationStatus,
   scheduleInterview,
   getMyInterviews,
+  checkJobApplication,
+  withdrawApplication,
 } = require('../controllers/applicationController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
@@ -25,6 +27,18 @@ router.get(
   protect,
   authorize('candidate'),
   getCandidateApplications
+);
+
+router.get(
+  '/check/:jobId',
+  protect,
+  checkJobApplication
+);
+
+router.delete(
+  '/:id/withdraw',
+  protect,
+  withdrawApplication
 );
 
 router.get(

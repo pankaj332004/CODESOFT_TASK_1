@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "start": "npm run dev",
-    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\" \"npm run ai:dev\"",
+    "dev:all": "concurrently \"npm run server:dev\" \"npm run client:dev\" \"npm run ai:dev\"",
     "client:dev": "npm run dev --prefix client",
     "client:build": "npm run build --prefix client",
     "server:dev": "npm run dev --prefix server",
     "server:start": "npm start --prefix server",
+    "ai:dev": "python -m uvicorn main:app --app-dir ai_service --port 8000 --reload",
+    "ai:install": "pip install -r requirements.txt",
     "install:all": "npm install && npm install --prefix client && npm install --prefix server"
   },
   "devDependencies": {

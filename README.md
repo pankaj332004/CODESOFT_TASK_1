@@ -258,14 +258,24 @@ Start the frontend and backend simultaneously:
 npm run dev
 ```
 
+Or start **all three** services (Frontend + Backend + AI Microservice) in one command:
+```bash
+npm run dev:all
+```
+
 * **Frontend Client**: [http://localhost:5173](http://localhost:5173)
 * **Backend Express API**: [http://localhost:5000](http://localhost:5000)
 * **API Health Check**: [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
-### 3. (Optional) Run the AI Matching Microservice
+### 3. (Optional) Run the AI Matching Microservice Separately
+From the project root:
+```bash
+npm run ai:dev
+```
+Or directly with Python:
 ```bash
 cd ai_service
-pip install -r requirements.txt # or: pip install fastapi uvicorn pydantic
+pip install -r requirements.txt
 python -m uvicorn main:app --port 8000 --reload
 ```
 * **Interactive AI API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
@@ -285,5 +295,5 @@ python -m uvicorn main:app --port 8000 --reload
 
 ## 👨‍💻 Author & Acknowledgments
 
-* **Pankaj Kumar** — Full-Stack Developer Intern  
+* **Pankaj Kumar Rajbhar** — Full-Stack Developer Intern  
 * Developed as part of **CodeSoft Task 1** (Web Development Internship).

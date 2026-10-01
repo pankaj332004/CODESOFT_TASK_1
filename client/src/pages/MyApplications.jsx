@@ -26,6 +26,16 @@ const MyApplications = () => {
     fetchApplications();
   }, []);
 
+  const handleWithdraw = async (applicationId) => {
+    if (!window.confirm('Are you sure you want to withdraw this application?')) return;
+    try {
+      await applicationService.withdrawApplication(applicationId);
+      setApplications((prev) => prev.filter((a) => a._id !== applicationId));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to withdraw application.');
+    }
+  };
+
   const getFilteredApps = () => {
     if (activeTab === 'All') return applications;
     return applications.filter(
@@ -98,7 +108,11 @@ const MyApplications = () => {
         ) : (
           <div className="flex flex-col">
             {filteredApps.map((app) => (
-              <ApplicationRow key={app._id} application={app} />
+              <ApplicationRow
+                key={app._id}
+                application={app}
+                onWithdraw={handleWithdraw}
+              />
             ))}
           </div>
         )}

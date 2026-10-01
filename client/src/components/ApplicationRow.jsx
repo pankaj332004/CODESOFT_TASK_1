@@ -110,6 +110,16 @@ const ApplicationRow = ({
               Resume
             </a>
           )}
+
+          {!isEmployer && onWithdraw && application.status !== 'Rejected' && application.status !== 'Hired' && (
+            <button
+              onClick={() => onWithdraw(application._id)}
+              className="px-2.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-brand transition-colors"
+              title="Withdraw this application"
+            >
+              Withdraw
+            </button>
+          )}
         </div>
       </div>
 

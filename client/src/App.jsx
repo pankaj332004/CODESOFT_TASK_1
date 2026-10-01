@@ -45,7 +45,7 @@ function App() {
         <Route
           path="/employer/post-job"
           element={
-            <ProtectedRoute role="employer">
+            <ProtectedRoute>
               <PostJob />
             </ProtectedRoute>
           }

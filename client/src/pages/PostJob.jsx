@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AlertCircle, Briefcase, Shield, ArrowRight, UserPlus } from 'lucide-react';
 import { jobService } from '../services/jobService';
 import { useAuth } from '../hooks/useAuth';
 import { JOB_CATEGORIES, JOB_TYPES, EXPERIENCE_LEVELS } from '../utils/constants';
@@ -82,15 +82,71 @@ const PostJob = () => {
     }
   };
 
+  // If candidate attempts to access job posting
+  if (user?.role === 'candidate') {
+    return (
+      <div className="py-16 bg-brandbg text-left min-h-[75vh] flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto px-4">
+          <div className="bg-white border border-brandborder rounded-2xl p-8 sm:p-10 shadow-lg text-center">
+            <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-5 border border-amber-200 shadow-sm">
+              <Briefcase size={30} />
+            </div>
+
+            <h1 className="text-xl sm:text-2xl font-extrabold text-brandtext mb-2">
+              Employer Account Required
+            </h1>
+            <p className="text-xs sm:text-sm text-brandmuted leading-relaxed mb-6">
+              You are currently signed in as a <span className="font-bold text-primary">Candidate (Job Seeker)</span>. 
+              Posting new jobs is reserved for registered <strong className="text-brandtext">Employers & Recruiters</strong>.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <Link
+                to="/jobs"
+                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold py-2.5 px-4 rounded-brand text-xs sm:text-sm shadow-sm transition-all"
+              >
+                <span>Browse & Apply for Jobs</span>
+                <ArrowRight size={15} />
+              </Link>
+
+              <Link
+                to="/candidate"
+                className="inline-flex items-center justify-center py-2.5 px-4 rounded-brand border border-brandborder text-xs font-semibold text-brandtext hover:bg-slate-50 transition-colors"
+              >
+                Go to Candidate Dashboard
+              </Link>
+            </div>
+
+            <div className="mt-6 pt-5 border-t border-brandborder text-xs text-brandmuted">
+              <span>Need to hire talent? </span>
+              <Link to="/register" className="font-bold text-primary hover:underline">
+                Create an Employer Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-10 bg-brandbg text-left">
       <div className="max-w-[840px] mx-auto px-4 sm:px-6">
         <div className="bg-white border border-brandborder rounded-2xl p-6 sm:p-10 shadow-sm">
-          <div className="pb-4 mb-6 border-b border-brandborder">
-            <h1 className="text-2xl font-extrabold text-brandtext leading-tight">Post a New Job</h1>
-            <p className="text-xs text-brandmuted mt-0.5">
-              Reach thousands of active developers, designers, and tech professionals
-            </p>
+          <div className="pb-4 mb-6 border-b border-brandborder flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-extrabold text-brandtext leading-tight">Post a New Job</h1>
+              <p className="text-xs text-brandmuted mt-0.5">
+                Reach thousands of active developers, designers, and tech professionals
+              </p>
+            </div>
+
+            {user?.role === 'admin' && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs font-bold self-start">
+                <Shield size={13} />
+                <span>Admin Mode</span>
+              </span>
+            )}
           </div>
 
           {error && (

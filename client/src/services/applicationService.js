@@ -42,4 +42,14 @@ export const applicationService = {
     const res = await api.get('/applications/my-interviews');
     return res.data;
   },
+
+  checkApplication: async (jobId) => {
+    const res = await api.get(`/applications/check/${jobId}`);
+    return res.data;
+  },
+
+  withdrawApplication: async (applicationId) => {
+    const res = await api.delete(`/applications/${applicationId}/withdraw`);
+    return res.data;
+  },
 };

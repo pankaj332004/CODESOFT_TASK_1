@@ -19,6 +19,8 @@ const ApplyJob = () => {
   const { user, isAuthenticated } = useAuth();
 
   const [job, setJob] = useState(null);
+  const [appliedInfo, setAppliedInfo] = useState(null);
+  const [withdrawing, setWithdrawing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -43,6 +45,14 @@ const ApplyJob = () => {
       try {
         const res = await jobService.getJobById(id);
         setJob(res.data);
+
+        // Check if candidate already applied
+        if (user?.role === 'candidate') {
+          const appRes = await applicationService.checkApplication(id);
+          if (appRes?.applied) {
+            setAppliedInfo(appRes);
+          }
+        }
       } catch (err) {
         setError('Position not found');
       } finally {
@@ -51,7 +61,22 @@ const ApplyJob = () => {
     };
 
     fetchJob();
-  }, [id, isAuthenticated, navigate]);
+  }, [id, isAuthenticated, navigate, user]);
+
+  const handleWithdraw = async () => {
+    if (!appliedInfo?.application?._id) return;
+    if (!window.confirm('Are you sure you want to withdraw your application?')) return;
+    setWithdrawing(true);
+    try {
+      await applicationService.withdrawApplication(appliedInfo.application._id);
+      setAppliedInfo(null);
+      alert('Application withdrawn. You may now submit a new application if you wish.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to withdraw application.');
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -123,6 +148,64 @@ const ApplyJob = () => {
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <div className="w-8 h-8 border-3 border-slate-200 border-t-primary rounded-full animate-spin mx-auto mb-3"></div>
         <p className="text-xs text-brandmuted">Loading application form...</p>
+      </div>
+    );
+  }
+
+  if (appliedInfo?.applied) {
+    return (
+      <div className="py-16 bg-brandbg text-left min-h-[75vh] flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto px-4">
+          <div className="bg-white border border-brandborder rounded-2xl p-8 sm:p-10 shadow-lg text-center">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200 shadow-sm">
+              <CheckCircle size={32} />
+            </div>
+
+            <h1 className="text-xl sm:text-2xl font-extrabold text-brandtext mb-2">
+              Application Already Submitted
+            </h1>
+            <p className="text-xs sm:text-sm text-brandmuted leading-relaxed mb-6">
+              You have already applied for <strong className="text-brandtext">{job?.title}</strong> at <strong className="text-brandtext">{job?.company}</strong>.
+            </p>
+
+            <div className="bg-slate-50 border border-brandborder rounded-xl p-4 mb-6 text-left text-xs flex flex-col gap-2">
+              <div className="flex justify-between items-center py-1 border-b border-slate-200">
+                <span className="text-brandmuted font-medium">Application Status:</span>
+                <span className="font-bold text-emerald-800 bg-emerald-100/70 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  {appliedInfo.application?.status}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-brandmuted font-medium">Date Submitted:</span>
+                <span className="font-semibold text-brandtext">
+                  {new Date(appliedInfo.application?.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Link
+                to="/candidate/applications"
+                className="inline-flex items-center justify-center py-2.5 px-4 rounded-brand bg-primary hover:bg-primary-dark text-white text-xs sm:text-sm font-semibold shadow-sm transition-all"
+              >
+                Track in My Applications
+              </Link>
+              <button
+                onClick={handleWithdraw}
+                disabled={withdrawing}
+                className="inline-flex items-center justify-center py-2.5 px-4 rounded-brand border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold transition-colors disabled:opacity-50"
+              >
+                {withdrawing ? 'Withdrawing Application...' : 'Withdraw Application'}
+              </button>
+              <Link
+                to={`/jobs/${id}`}
+                className="text-xs text-brandmuted hover:text-brandtext font-medium py-1"
+              >
+                &larr; Back to Job Overview
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

@@ -228,6 +228,122 @@ const initialJobs = [
     applicantsCount: 33,
     createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
   },
+  {
+    _id: '6602b0000000000000000007',
+    title: 'Enterprise Account Executive',
+    company: 'Salesforce',
+    companyLogo: 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg',
+    location: 'San Francisco, USA',
+    category: 'Sales',
+    type: 'Full Time',
+    salary: { min: 110000, max: 155000, currency: '$', period: 'yr' },
+    experience: '3-5 years',
+    description: 'Drive high-velocity enterprise software sales cycles, build strategic relationships with executive stakeholders, and champion market-leading CRM and Cloud solutions.',
+    responsibilities: [
+      'Manage complex multi-tier enterprise SaaS sales cycles from qualification to contract close',
+      'Execute strategic territory planning and consultative customer discovery sessions',
+      'Collaborate with Solution Engineers and Customer Success leaders on value demonstrations',
+      'Exceed quarterly quota and software ARR targets across target accounts',
+    ],
+    requirements: [
+      '3+ years of enterprise SaaS solution selling or technical sales experience',
+      'Demonstrated track record of overachieving revenue quotas and pipeline generation',
+      'Outstanding executive presentation, deal structuring, and negotiation abilities',
+      'Experience with CRM workflows and consultative sales methodologies',
+    ],
+    employer: '6601a0000000000000000002',
+    featured: true,
+    views: 1420,
+    applicantsCount: 38,
+    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+  },
+  {
+    _id: '6602b0000000000000000008',
+    title: 'Financial Analyst - Global Markets',
+    company: 'Goldman Sachs',
+    companyLogo: 'https://upload.wikimedia.org/wikipedia/commons/6/61/Goldman_Sachs.svg',
+    location: 'New York, USA',
+    category: 'Finance',
+    type: 'Full Time',
+    salary: { min: 115000, max: 150000, currency: '$', period: 'yr' },
+    experience: '3-5 years',
+    description: 'Join Goldman Sachs Global Markets team. Perform in-depth quantitative valuation modeling, corporate financial analysis, and strategic capital market insights.',
+    responsibilities: [
+      'Construct detailed DCF, LBO, merger consequence, and sensitivity models',
+      'Evaluate industry macroeconomic trends, competitive positioning, and equity multiples',
+      'Prepare institutional investment presentations and risk-reward profile decks',
+      'Participate in deal structuring, due diligence, and capital budgeting evaluations',
+    ],
+    requirements: [
+      '2+ years of experience in financial analysis, corporate finance, or investment banking',
+      'Deep quantitative modeling expertise in Excel and Python/R financial libraries',
+      'Strong mastery of balance sheets, cash flow dynamics, and US GAAP / IFRS standards',
+      'Degree in Finance, Accounting, Economics, or quantitative discipline',
+    ],
+    employer: '6601a0000000000000000002',
+    featured: true,
+    views: 1680,
+    applicantsCount: 45,
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+  },
+  {
+    _id: '6602b0000000000000000009',
+    title: 'Fintech Operations & Risk Analyst',
+    company: 'Stripe',
+    companyLogo: 'https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg',
+    location: 'Remote',
+    category: 'Finance',
+    type: 'Full Time',
+    salary: { min: 95000, max: 135000, currency: '$', period: 'yr' },
+    experience: '3-5 years',
+    description: 'Help manage and protect the financial infrastructure powering millions of global online businesses. Model transaction risk, monitor payment rails, and optimize treasury liquidity.',
+    responsibilities: [
+      'Analyze payment settlement workflows and multi-currency exchange reconciliations',
+      'Monitor fraud vectors, transaction anomalies, and credit exposure metrics',
+      'Partner with backend payments engineering to build automated financial auditing tools',
+      'Develop automated analytics dashboards tracking gross payment volumes and processing margins',
+    ],
+    requirements: [
+      '2+ years in fintech operations, treasury, risk analysis, or quantitative financial analytics',
+      'Strong proficiency with SQL database querying and Python/Pandas data modeling',
+      'Understanding of international payment rails (ACH, SEPA, card networks)',
+      'High attention to detail and rigorous quantitative problem-solving skills',
+    ],
+    employer: '6601a0000000000000000002',
+    featured: false,
+    views: 890,
+    applicantsCount: 22,
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+  },
+  {
+    _id: '6602b0000000000000000010',
+    title: 'Inbound Sales Development Lead',
+    company: 'HubSpot',
+    companyLogo: 'https://upload.wikimedia.org/wikipedia/commons/3/3f/HubSpot_Logo.svg',
+    location: 'Remote',
+    category: 'Sales',
+    type: 'Full Time',
+    salary: { min: 80000, max: 115000, currency: '$', period: 'yr' },
+    experience: '1-3 years',
+    description: 'Empower high-growth businesses to scale their customer acquisition, CRM, and digital marketing engines using HubSpot unified customer platform.',
+    responsibilities: [
+      'Conduct consultative discovery calls with inbound leads to evaluate business requirements',
+      'Demonstrate HubSpot platform value and propose customized software bundles',
+      'Guide mid-market prospects through onboarding, proof-of-concept, and purchase approvals',
+      'Maintain rigorous CRM pipeline tracking and revenue forecasting accuracy',
+    ],
+    requirements: [
+      '1-3 years in inbound software sales, B2B SaaS business development, or client consulting',
+      'Strong interpersonal communication, empathy, and active listening skills',
+      'Self-driven work ethic in a distributed, remote-first sales environment',
+      'Familiarity with inbound marketing, sales funnels, and CRM automation',
+    ],
+    employer: '6601a0000000000000000002',
+    featured: false,
+    views: 730,
+    applicantsCount: 19,
+    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+  },
 ];
 
 const initialApplications = [
@@ -317,6 +433,15 @@ const connectDB = async () => {
         if (adminSeed) {
           await User.create(adminSeed);
           console.log('👑 Admin user initialized in database: admin@jobboard.com');
+        }
+      }
+
+      // Sync missing seed jobs (e.g., Sales and Finance additions)
+      for (const seedJob of initialJobs) {
+        const exists = await Job.findOne({ company: seedJob.company, title: seedJob.title });
+        if (!exists) {
+          await Job.create(seedJob);
+          console.log(`💼 Seeded missing company job: ${seedJob.title} at ${seedJob.company}`);
         }
       }
     }

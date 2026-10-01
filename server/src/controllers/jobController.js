@@ -269,14 +269,26 @@ const notifyJobAlertSubscribers = async (job) => {
 
     for (const user of candidateUsers) {
       const match = (user.jobAlerts || []).find((alert) => {
+        const queryTerm = (alert.keyword || alert.title || '').trim().toLowerCase();
         const titleMatch =
-          alert.title &&
-          job.title.toLowerCase().includes(alert.title.toLowerCase());
+          queryTerm &&
+          (job.title.toLowerCase().includes(queryTerm) ||
+           (job.description && job.description.toLowerCase().includes(queryTerm)) ||
+           (job.category && job.category.toLowerCase().includes(queryTerm)));
+
         const catMatch =
           alert.category &&
           alert.category !== 'All' &&
+          job.category &&
           job.category.toLowerCase() === alert.category.toLowerCase();
-        return titleMatch || catMatch;
+
+        const locMatch =
+          alert.location &&
+          alert.location !== 'Anywhere' &&
+          job.location &&
+          job.location.toLowerCase().includes(alert.location.toLowerCase());
+
+        return titleMatch || catMatch || locMatch;
       });
 
       if (match) {

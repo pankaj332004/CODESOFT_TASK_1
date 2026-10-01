@@ -547,6 +547,93 @@ const getMyInterviews = async (req, res) => {
   }
 };
 
+// @desc    Check if candidate already applied for a job
+// @route   GET /api/applications/check/:jobId
+// @access  Private (Candidate)
+const checkJobApplication = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const userId = req.user._id.toString();
+
+    if (store.isUsingMongo) {
+      const existing = await Application.findOne({
+        job: jobId,
+        candidate: userId,
+      });
+
+      return res.json({
+        success: true,
+        applied: !!existing,
+        application: existing || null,
+      });
+    } else {
+      const existing = store.applications.find(
+        (a) =>
+          a.job.toString() === jobId.toString() &&
+          a.candidate.toString() === userId
+      );
+
+      return res.json({
+        success: true,
+        applied: !!existing,
+        application: existing || null,
+      });
+    }
+  } catch (error) {
+    console.error('checkJobApplication error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Withdraw/cancel an application
+// @route   DELETE /api/applications/:id/withdraw
+// @access  Private (Candidate)
+const withdrawApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id.toString();
+
+    if (store.isUsingMongo) {
+      const application = await Application.findById(id);
+      if (!application) {
+        return res.status(404).json({ success: false, message: 'Application not found' });
+      }
+
+      if (application.candidate.toString() !== userId && req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Not authorized to withdraw this application' });
+      }
+
+      // Decrement applicantsCount on Job
+      await Job.findByIdAndUpdate(application.job, { $inc: { applicantsCount: -1 } });
+
+      await application.deleteOne();
+      return res.json({ success: true, message: 'Application successfully withdrawn' });
+    } else {
+      const appIndex = store.applications.findIndex((a) => a._id.toString() === id.toString());
+      if (appIndex === -1) {
+        return res.status(404).json({ success: false, message: 'Application not found' });
+      }
+
+      const app = store.applications[appIndex];
+      if (app.candidate.toString() !== userId && req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Not authorized to withdraw this application' });
+      }
+
+      // Decrement applicantsCount on Job
+      const job = store.jobs.find((j) => j._id.toString() === app.job.toString());
+      if (job && job.applicantsCount > 0) {
+        job.applicantsCount -= 1;
+      }
+
+      store.applications.splice(appIndex, 1);
+      return res.json({ success: true, message: 'Application successfully withdrawn' });
+    }
+  } catch (error) {
+    console.error('withdrawApplication error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   applyJob,
   getCandidateApplications,
@@ -554,4 +641,6 @@ module.exports = {
   updateApplicationStatus,
   scheduleInterview,
   getMyInterviews,
+  checkJobApplication,
+  withdrawApplication,
 };

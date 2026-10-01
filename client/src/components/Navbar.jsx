@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Briefcase, Menu, X, User, LogOut, ChevronDown, PlusCircle, Building, Bookmark, Bell, Calendar, Shield } from 'lucide-react';
+import { Briefcase, Menu, X, User, LogOut, ChevronDown, PlusCircle, Building, Bookmark, Bell, Calendar, Shield, Search } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import NotificationBell from './NotificationBell';
 
@@ -171,6 +171,26 @@ const Navbar = () => {
                       </Link>
                     </>
                   )}
+                  {isEmployer && (
+                    <Link
+                      to="/employer/post-job"
+                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-emerald-700 font-semibold bg-emerald-50/70 hover:bg-emerald-100 transition-colors"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <PlusCircle size={16} />
+                      <span>Post a New Job</span>
+                    </Link>
+                  )}
+                  {isAdmin && (
+                    <Link
+                      to="/employer/post-job"
+                      className="flex items-center gap-2.5 px-4 py-2 text-sm text-emerald-700 font-semibold hover:bg-emerald-50 transition-colors"
+                      onClick={() => setUserDropdownOpen(false)}
+                    >
+                      <PlusCircle size={16} />
+                      <span>Post a Job (Admin)</span>
+                    </Link>
+                  )}
                   <Link
                     to={isEmployer ? '/employer/interviews' : '/candidate/interviews'}
                     className="flex items-center gap-2.5 px-4 py-2 text-sm text-brandtext-light hover:bg-primary-light hover:text-primary transition-colors"
@@ -209,20 +229,42 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Post a Job button (Green accent as in mockup) */}
-          <Link
-            to={
-              isEmployer
-                ? '/employer/post-job'
-                : isAuthenticated
-                ? '/employer/post-job'
-                : '/login?redirect=/employer/post-job'
-            }
-            className="hidden sm:inline-flex items-center gap-2 bg-success hover:bg-success-dark text-white px-4 py-2 text-sm font-semibold rounded-brand shadow-sm shadow-success/20 transition-all hover:-translate-y-0.5"
-          >
-            <PlusCircle size={16} />
-            <span>Post A Job</span>
-          </Link>
+          {/* Primary Action Button (Role-Aware) */}
+          {isAuthenticated ? (
+            isEmployer ? (
+              <Link
+                to="/employer/post-job"
+                className="hidden sm:inline-flex items-center gap-2 bg-success hover:bg-success-dark text-white px-4 py-2 text-sm font-semibold rounded-brand shadow-sm shadow-success/20 transition-all hover:-translate-y-0.5"
+              >
+                <PlusCircle size={16} />
+                <span>Post A Job</span>
+              </Link>
+            ) : isAdmin ? (
+              <Link
+                to="/admin"
+                className="hidden sm:inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm font-semibold rounded-brand shadow-sm shadow-purple-600/20 transition-all hover:-translate-y-0.5"
+              >
+                <Shield size={16} />
+                <span>Admin Panel</span>
+              </Link>
+            ) : (
+              <Link
+                to="/jobs"
+                className="hidden sm:inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2 text-sm font-semibold rounded-brand shadow-sm shadow-primary/20 transition-all hover:-translate-y-0.5"
+              >
+                <Search size={16} />
+                <span>Find Jobs</span>
+              </Link>
+            )
+          ) : (
+            <Link
+              to="/login?redirect=/employer/post-job"
+              className="hidden sm:inline-flex items-center gap-2 bg-success hover:bg-success-dark text-white px-4 py-2 text-sm font-semibold rounded-brand shadow-sm shadow-success/20 transition-all hover:-translate-y-0.5"
+            >
+              <PlusCircle size={16} />
+              <span>Post A Job</span>
+            </Link>
+          )}
 
           {/* Mobile hamburger toggle */}
           <button
@@ -296,14 +338,45 @@ const Navbar = () => {
               </Link>
             </div>
           )}
-          <Link
-            to="/employer/post-job"
-            onClick={() => setMobileMenuOpen(false)}
-            className="inline-flex items-center justify-center gap-2 bg-success text-white py-2.5 rounded-brand font-semibold text-sm shadow-sm"
-          >
-            <PlusCircle size={16} />
-            <span>Post A Job</span>
-          </Link>
+          {isAuthenticated ? (
+            isEmployer ? (
+              <Link
+                to="/employer/post-job"
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex items-center justify-center gap-2 bg-success text-white py-2.5 rounded-brand font-semibold text-sm shadow-sm"
+              >
+                <PlusCircle size={16} />
+                <span>Post A Job</span>
+              </Link>
+            ) : isAdmin ? (
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex items-center justify-center gap-2 bg-purple-600 text-white py-2.5 rounded-brand font-semibold text-sm shadow-sm"
+              >
+                <Shield size={16} />
+                <span>Admin Panel</span>
+              </Link>
+            ) : (
+              <Link
+                to="/jobs"
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-brand font-semibold text-sm shadow-sm"
+              >
+                <Search size={16} />
+                <span>Find Jobs</span>
+              </Link>
+            )
+          ) : (
+            <Link
+              to="/login?redirect=/employer/post-job"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex items-center justify-center gap-2 bg-success text-white py-2.5 rounded-brand font-semibold text-sm shadow-sm"
+            >
+              <PlusCircle size={16} />
+              <span>Post A Job</span>
+            </Link>
+          )}
         </div>
       )}
     </header>

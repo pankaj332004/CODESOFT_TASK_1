@@ -15,6 +15,7 @@ import {
   Flag,
 } from 'lucide-react';
 import { jobService } from '../services/jobService';
+import { applicationService } from '../services/applicationService';
 import { formatSalary, formatTimeAgo, formatDate } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
 import ReportJobModal from '../components/ReportJobModal';
@@ -25,6 +26,8 @@ const JobDetails = () => {
   const { user, toggleSaveJob } = useAuth();
   const [job, setJob] = useState(null);
   const [matchScore, setMatchScore] = useState(null);
+  const [appliedInfo, setAppliedInfo] = useState(null);
+  const [withdrawing, setWithdrawing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -37,11 +40,16 @@ const JobDetails = () => {
         const res = await jobService.getJobById(id);
         setJob(res.data);
 
-        // If candidate is logged in, fetch AI Match Score
+        // If candidate is logged in, fetch AI Match Score & Application status
         if (user && user.role === 'candidate') {
           jobService
             .getJobMatchScore(id)
             .then((mRes) => setMatchScore(mRes.data))
+            .catch(() => {});
+
+          applicationService
+            .checkApplication(id)
+            .then((appRes) => setAppliedInfo(appRes))
             .catch(() => {});
         }
       } catch (err) {
@@ -53,6 +61,22 @@ const JobDetails = () => {
 
     fetchJobAndMatch();
   }, [id, user]);
+
+  const handleWithdraw = async () => {
+    if (!appliedInfo?.application?._id) return;
+    if (!window.confirm('Are you sure you want to withdraw your application for this position?')) return;
+    setWithdrawing(true);
+    try {
+      await applicationService.withdrawApplication(appliedInfo.application._id);
+      setAppliedInfo({ applied: false, application: null });
+      setJob((prev) => (prev ? { ...prev, applicantsCount: Math.max(0, (prev.applicantsCount || 1) - 1) } : prev));
+      alert('Application successfully withdrawn.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to withdraw application.');
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   const isSaved = user?.savedJobs?.some(
     (item) => (item._id || item).toString() === job?._id?.toString()
@@ -151,12 +175,33 @@ const JobDetails = () => {
               <Bookmark size={16} fill={isSaved ? 'currentColor' : 'none'} />
               <span>{isSaved ? 'Saved' : 'Save'}</span>
             </button>
-            <Link
-              to={`/apply/${job._id}`}
-              className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-brand font-semibold text-xs sm:text-sm shadow-sm transition-all hover:-translate-y-0.5"
-            >
-              Apply Now
-            </Link>
+            {appliedInfo?.applied ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-2 rounded-brand bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-sm">
+                  <CheckCircle2 size={15} className="text-emerald-600" />
+                  <span>Applied ({appliedInfo.application?.status || 'Active'})</span>
+                </div>
+                <button
+                  onClick={handleWithdraw}
+                  disabled={withdrawing}
+                  className="px-3 py-2 rounded-brand border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold transition-colors disabled:opacity-50"
+                  title="Withdraw this application"
+                >
+                  {withdrawing ? 'Withdrawing...' : 'Withdraw'}
+                </button>
+              </div>
+            ) : user?.role === 'employer' ? (
+              <span className="text-xs text-brandmuted font-semibold bg-slate-100 px-3 py-2 rounded-brand border border-slate-200">
+                Employer View
+              </span>
+            ) : (
+              <Link
+                to={`/apply/${job._id}`}
+                className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-brand font-semibold text-xs sm:text-sm shadow-sm transition-all hover:-translate-y-0.5"
+              >
+                Apply Now
+              </Link>
+            )}
           </div>
 
         </div>
@@ -207,15 +252,44 @@ const JobDetails = () => {
             )}
 
             {/* Bottom CTA Card */}
-            <div className="bg-gradient-to-r from-primary-light to-white border border-primary/20 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <h4 className="font-bold text-base text-brandtext">Interested in this opportunity?</h4>
-                <p className="text-xs text-brandmuted">Submit your resume and cover letter to apply today.</p>
+            {appliedInfo?.applied ? (
+              <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-white border border-emerald-200 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 size={18} className="text-emerald-600" />
+                    <h4 className="font-bold text-base text-emerald-950">You have already submitted an application</h4>
+                  </div>
+                  <p className="text-xs text-emerald-800">
+                    Current Status: <strong className="font-bold text-emerald-900">{appliedInfo.application?.status}</strong> • Submitted on {formatDate(appliedInfo.application?.createdAt)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <Link
+                    to="/candidate/applications"
+                    className="bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100/60 px-4 py-2 rounded-brand font-semibold text-xs shadow-sm transition-all"
+                  >
+                    View My Applications
+                  </Link>
+                  <button
+                    onClick={handleWithdraw}
+                    disabled={withdrawing}
+                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-brand font-semibold text-xs transition-colors disabled:opacity-50"
+                  >
+                    {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
+                  </button>
+                </div>
               </div>
-              <Link to={`/apply/${job._id}`} className="bg-success hover:bg-success-dark text-white px-5 py-2.5 rounded-brand font-semibold text-xs sm:text-sm shadow-sm transition-all hover:-translate-y-0.5 shrink-0">
-                Apply for this Position
-              </Link>
-            </div>
+            ) : (
+              <div className="bg-gradient-to-r from-primary-light to-white border border-primary/20 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-bold text-base text-brandtext">Interested in this opportunity?</h4>
+                  <p className="text-xs text-brandmuted">Submit your resume and cover letter to apply today.</p>
+                </div>
+                <Link to={`/apply/${job._id}`} className="bg-success hover:bg-success-dark text-white px-5 py-2.5 rounded-brand font-semibold text-xs sm:text-sm shadow-sm transition-all hover:-translate-y-0.5 shrink-0">
+                  Apply for this Position
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Right Column: AI Match Score, Company & Job Overview */}
