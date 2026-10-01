@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Building, MapPin, ExternalLink, ArrowLeft, Briefcase, Users, Globe } from 'lucide-react';
 import { companyService } from '../services/companyService';
 import JobCard from '../components/JobCard';
+import CompanyLogo from '../components/CompanyLogo';
 
 const CompanyDetails = () => {
   const { name } = useParams();
@@ -59,12 +60,8 @@ const CompanyDetails = () => {
         {/* Company Header Banner */}
         <div className="bg-white border border-brandborder rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="w-20 h-20 rounded-2xl border border-brandborder bg-slate-50 flex items-center justify-center p-2 overflow-hidden shrink-0 shadow-sm">
-              {company.logo ? (
-                <img src={company.logo} alt={company.name} className="max-w-full max-h-full object-contain" />
-              ) : (
-                <Building size={36} className="text-primary" />
-              )}
+            <div className="w-20 h-20 rounded-2xl border border-brandborder bg-slate-50 flex items-center justify-center p-3 overflow-hidden shrink-0 shadow-sm">
+              <CompanyLogo company={company.name} logo={company.logo} />
             </div>
 
             <div className="flex flex-col gap-1">

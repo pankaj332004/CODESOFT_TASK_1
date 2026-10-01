@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Building, MapPin, Briefcase, Search, ArrowRight, ExternalLink } from 'lucide-react';
 import { companyService } from '../services/companyService';
+import CompanyLogo from '../components/CompanyLogo';
 
 const Companies = () => {
   const [companies, setCompanies] = useState([]);
@@ -102,12 +103,8 @@ const Companies = () => {
                 className="bg-white border border-brandborder rounded-xl p-6 shadow-sm hover:shadow-card hover:-translate-y-1 transition-all flex flex-col"
               >
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-14 h-14 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center p-1.5 overflow-hidden shrink-0">
-                    {comp.logo ? (
-                      <img src={comp.logo} alt={comp.name} className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <Building size={24} className="text-primary" />
-                    )}
+                  <div className="w-14 h-14 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center p-2 overflow-hidden shrink-0">
+                    <CompanyLogo company={comp.name} logo={comp.logo} />
                   </div>
 
                   <div className="min-w-0 flex-1">

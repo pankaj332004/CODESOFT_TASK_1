@@ -15,6 +15,7 @@ import { applicationService } from '../services/applicationService';
 import { jobService } from '../services/jobService';
 import { useAuth } from '../hooks/useAuth';
 import ApplicationRow from '../components/ApplicationRow';
+import ErrorBoundary from '../components/ErrorBoundary';
 import JobCard from '../components/JobCard';
 
 const CandidateDashboard = () => {
@@ -43,6 +44,16 @@ const CandidateDashboard = () => {
 
     fetchData();
   }, []);
+
+  const handleWithdraw = async (applicationId) => {
+    if (!window.confirm('Are you sure you want to withdraw this application?')) return;
+    try {
+      await applicationService.withdrawApplication(applicationId);
+      setApplications((prev) => prev.filter((a) => a._id !== applicationId));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to withdraw application.');
+    }
+  };
 
   const interviewsCount = applications.filter((a) => a.status === 'Interview').length;
   const offersCount = applications.filter((a) => a.status === 'Offer' || a.status === 'Hired').length;
@@ -185,11 +196,17 @@ const CandidateDashboard = () => {
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col">
-            {applications.slice(0, 5).map((app) => (
-              <ApplicationRow key={app._id} application={app} />
-            ))}
-          </div>
+          <ErrorBoundary title="Unable to display recent applications">
+            <div className="flex flex-col">
+              {applications.slice(0, 5).map((app) => (
+                <ApplicationRow
+                  key={app._id}
+                  application={app}
+                  onWithdraw={handleWithdraw}
+                />
+              ))}
+            </div>
+          </ErrorBoundary>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bookmark, MapPin, Clock, Sparkles } from 'lucide-react';
 import { formatSalary, formatTimeAgo } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
+import CompanyLogo from './CompanyLogo';
 
 const JobCard = ({ job, layout = 'grid' }) => {
   const { user, toggleSaveJob } = useAuth();
@@ -22,10 +23,6 @@ const JobCard = ({ job, layout = 'grid' }) => {
       return;
     }
     await toggleSaveJob(job._id);
-  };
-
-  const getCompanyInitial = (name) => {
-    return name ? name.charAt(0).toUpperCase() : 'C';
   };
 
   return (
@@ -50,24 +47,8 @@ const JobCard = ({ job, layout = 'grid' }) => {
 
       <div className="flex items-start gap-3.5 mb-3.5">
         {/* Company Logo */}
-        <div className="w-12 h-12 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 p-1">
-          {job.companyLogo ? (
-            <img
-              src={job.companyLogo}
-              alt={job.company}
-              className="max-w-full max-h-full object-contain"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-          ) : null}
-          <div
-            className="w-full h-full bg-gradient-to-br from-primary-light to-blue-200 text-primary-dark font-extrabold text-lg flex items-center justify-center"
-            style={{ display: job.companyLogo ? 'none' : 'flex' }}
-          >
-            {getCompanyInitial(job.company)}
-          </div>
+        <div className="w-12 h-12 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 p-1.5">
+          <CompanyLogo company={job.company} logo={job.companyLogo} />
         </div>
 
         {/* Title and Company */}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Briefcase } from 'lucide-react';
 import { applicationService } from '../services/applicationService';
 import ApplicationRow from '../components/ApplicationRow';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { APPLICATION_STATUSES } from '../utils/constants';
 
 const MyApplications = () => {
@@ -106,15 +107,17 @@ const MyApplications = () => {
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col">
-            {filteredApps.map((app) => (
-              <ApplicationRow
-                key={app._id}
-                application={app}
-                onWithdraw={handleWithdraw}
-              />
-            ))}
-          </div>
+          <ErrorBoundary onReset={fetchApplications} title="Unable to display applications">
+            <div className="flex flex-col">
+              {filteredApps.map((app) => (
+                <ApplicationRow
+                  key={app._id}
+                  application={app}
+                  onWithdraw={handleWithdraw}
+                />
+              ))}
+            </div>
+          </ErrorBoundary>
         )}
       </div>
     </div>

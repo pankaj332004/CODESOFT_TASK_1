@@ -19,6 +19,7 @@ import { applicationService } from '../services/applicationService';
 import { formatSalary, formatTimeAgo, formatDate } from '../utils/helpers';
 import { useAuth } from '../hooks/useAuth';
 import ReportJobModal from '../components/ReportJobModal';
+import CompanyLogo from '../components/CompanyLogo';
 
 const JobDetails = () => {
   const { id } = useParams();
@@ -125,12 +126,8 @@ const JobDetails = () => {
         {/* Job Header Hero Card */}
         <div className="bg-white border border-brandborder rounded-xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 shadow-sm">
           <div className="flex items-start sm:items-center gap-5">
-            <div className="w-16 h-16 rounded-xl border border-brandborder bg-slate-50 flex items-center justify-center font-extrabold text-2xl text-primary overflow-hidden shrink-0 p-1.5">
-              {job.companyLogo ? (
-                <img src={job.companyLogo} alt={job.company} className="max-w-full max-h-full object-contain" />
-              ) : (
-                <span>{job.company?.charAt(0) || 'C'}</span>
-              )}
+            <div className="w-16 h-16 rounded-xl border border-brandborder bg-slate-50 flex items-center justify-center font-extrabold text-2xl text-primary overflow-hidden shrink-0 p-2">
+              <CompanyLogo company={job.company} logo={job.companyLogo} />
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-brandtext leading-tight mb-1.5">

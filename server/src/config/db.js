@@ -90,7 +90,7 @@ const initialJobs = [
     _id: '6602b0000000000000000002',
     title: 'UI/UX Designer',
     company: 'Dribbble',
-    companyLogo: 'https://upload.wikimedia.org/wikipedia/commons/3/32/Dribbble_logo.svg',
+    companyLogo: 'https://cdn.simpleicons.org/dribbble/ea4c89',
     location: 'New York, USA',
     category: 'Design',
     type: 'Full Time',

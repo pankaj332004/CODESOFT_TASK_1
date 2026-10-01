@@ -3,6 +3,7 @@ import { Calendar, Clock, Video, ExternalLink, MapPin, Building, ArrowRight, Che
 import { applicationService } from '../services/applicationService';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
+import CompanyLogo from '../components/CompanyLogo';
 
 const MyInterviews = () => {
   const { user } = useAuth();
@@ -89,12 +90,8 @@ const MyInterviews = () => {
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 font-bold text-primary p-1">
-                        {job.companyLogo ? (
-                          <img src={job.companyLogo} alt={job.company} className="max-w-full max-h-full object-contain" />
-                        ) : (
-                          <span>{job.company?.charAt(0) || 'C'}</span>
-                        )}
+                      <div className="w-11 h-11 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 font-bold text-primary p-1.5">
+                        <CompanyLogo company={job.company} logo={job.companyLogo} />
                       </div>
                       <div>
                         <h4 className="font-bold text-base text-brandtext leading-snug">{job.title || 'Position'}</h4>

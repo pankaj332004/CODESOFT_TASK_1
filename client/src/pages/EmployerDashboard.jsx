@@ -13,6 +13,7 @@ import { applicationService } from '../services/applicationService';
 import { jobService } from '../services/jobService';
 import { useAuth } from '../hooks/useAuth';
 import ApplicationRow from '../components/ApplicationRow';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { formatDate, formatSalary } from '../utils/helpers';
 
 const EmployerDashboard = () => {
@@ -193,16 +194,18 @@ const EmployerDashboard = () => {
             <p className="text-xs text-brandmuted">Share your posted jobs to attract qualified candidates.</p>
           </div>
         ) : (
-          <div className="flex flex-col">
-            {applications.map((app) => (
-              <ApplicationRow
-                key={app._id}
-                application={app}
-                isEmployer={true}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
-          </div>
+          <ErrorBoundary title="Unable to display candidate applications">
+            <div className="flex flex-col">
+              {applications.map((app) => (
+                <ApplicationRow
+                  key={app._id}
+                  application={app}
+                  isEmployer={true}
+                  onStatusChange={handleStatusChange}
+                />
+              ))}
+            </div>
+          </ErrorBoundary>
         )}
       </div>
 

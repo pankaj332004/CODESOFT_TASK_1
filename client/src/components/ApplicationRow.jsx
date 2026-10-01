@@ -3,29 +3,37 @@ import { Link } from 'react-router-dom';
 import { Calendar, Video } from 'lucide-react';
 import { formatDate, getStatusBadgeClass } from '../utils/helpers';
 import ScheduleInterviewModal from './ScheduleInterviewModal';
+import CompanyLogo from './CompanyLogo';
 
 const ApplicationRow = ({
   application,
   isEmployer = false,
   onStatusChange,
+  onWithdraw,
 }) => {
   const [showInterviewModal, setShowInterviewModal] = useState(false);
 
   if (!application) return null;
 
-  const job = application.job || {};
+  const job = (application.job && typeof application.job === 'object') ? application.job : {};
+
+  const getResumeUrl = (resume) => {
+    if (!resume || typeof resume !== 'string') return null;
+    if (resume.startsWith('http') || resume.startsWith('/uploads')) {
+      return resume;
+    }
+    return `/uploads/resumes/${resume}`;
+  };
+
+  const resumeUrl = getResumeUrl(application.resume);
 
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 bg-white border-b border-brandborder last:border-none gap-4 hover:bg-slate-50/70 transition-colors text-left">
         {/* Job / Candidate Info */}
         <div className="flex items-center gap-3.5 flex-1 min-w-0">
-          <div className="w-11 h-11 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 font-bold text-primary text-sm p-1">
-            {job.companyLogo ? (
-              <img src={job.companyLogo} alt={job.company || 'Company'} className="max-w-full max-h-full object-contain" />
-            ) : (
-              <span>{job.company?.charAt(0) || 'C'}</span>
-            )}
+          <div className="w-11 h-11 rounded-brand border border-brandborder bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 font-bold text-primary text-sm p-1.5">
+            <CompanyLogo company={job.company} logo={job.companyLogo} />
           </div>
           <div className="flex flex-col gap-0.5 min-w-0">
             <h4 className="font-bold text-sm text-brandtext truncate">{job.title || 'Position'}</h4>
@@ -50,7 +58,7 @@ const ApplicationRow = ({
           {isEmployer ? (
             <select
               className={`px-3 py-1 text-xs font-bold rounded-full cursor-pointer outline-none border ${getStatusBadgeClass(application.status)}`}
-              value={application.status}
+              value={application.status || 'Applied'}
               onChange={(e) => {
                 const val = e.target.value;
                 if (val === 'Interview') {
@@ -70,7 +78,7 @@ const ApplicationRow = ({
             </select>
           ) : (
             <span className={`inline-flex items-center px-3 py-0.5 text-xs font-bold rounded-full ${getStatusBadgeClass(application.status)}`}>
-              {application.status}
+              {application.status || 'Applied'}
             </span>
           )}
         </div>
@@ -89,20 +97,15 @@ const ApplicationRow = ({
           )}
 
           <Link
-            to={`/jobs/${job._id || ''}`}
+            to={job._id ? `/jobs/${job._id}` : '/jobs'}
             className="px-3 py-1.5 text-xs font-semibold text-brandtext bg-white border border-brandborder rounded-brand hover:bg-slate-50 transition-colors"
           >
             View Job
           </Link>
 
-          {application.resume && (
+          {resumeUrl && (
             <a
-              href={
-                application.resume.startsWith('http') ||
-                application.resume.startsWith('/uploads')
-                  ? application.resume
-                  : `/uploads/resumes/${application.resume}`
-              }
+              href={resumeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1.5 text-xs font-semibold text-primary border border-primary rounded-brand hover:bg-primary-light transition-colors"
@@ -111,7 +114,7 @@ const ApplicationRow = ({
             </a>
           )}
 
-          {!isEmployer && onWithdraw && application.status !== 'Rejected' && application.status !== 'Hired' && (
+          {!isEmployer && typeof onWithdraw === 'function' && application.status !== 'Rejected' && application.status !== 'Hired' && (
             <button
               onClick={() => onWithdraw(application._id)}
               className="px-2.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-brand transition-colors"
