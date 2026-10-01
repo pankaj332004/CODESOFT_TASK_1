@@ -259,13 +259,37 @@ const notifyJobAlertSubscribers = async (job) => {
     const { sendRealtimeNotification } = require('../socket');
 
     let candidateUsers = [];
+    let employerUser = null;
+
     if (store.isUsingMongo) {
       candidateUsers = await User.find({ 'jobAlerts.0': { $exists: true } }).lean();
+      if (job.employer) {
+        employerUser = await User.findById(job.employer).lean();
+      }
     } else {
       candidateUsers = (store.users || []).filter(
         (u) => u.jobAlerts && u.jobAlerts.length > 0
       );
+      if (job.employer) {
+        employerUser = (store.users || []).find(
+          (u) => u._id.toString() === job.employer.toString()
+        );
+      }
     }
+
+    const companyBio =
+      employerUser?.bio ||
+      `${job.company} is an innovative organization actively expanding their team and hiring qualified candidates on the Job Board.`;
+    const companyWebsite = employerUser?.companyWebsite || '';
+    const companyLocation = job.location || employerUser?.location || 'Remote';
+
+    // Format salary display
+    const salaryMin = job.salary?.min ? `$${Math.round(job.salary.min / 1000)}k` : '';
+    const salaryMax = job.salary?.max ? `$${Math.round(job.salary.max / 1000)}k` : '';
+    let salaryText = 'Competitive';
+    if (salaryMin && salaryMax) salaryText = `${salaryMin} - ${salaryMax} / yr`;
+    else if (salaryMin) salaryText = `From ${salaryMin} / yr`;
+    else if (salaryMax) salaryText = `Up to ${salaryMax} / yr`;
 
     for (const user of candidateUsers) {
       const match = (user.jobAlerts || []).find((alert) => {
@@ -273,8 +297,8 @@ const notifyJobAlertSubscribers = async (job) => {
         const titleMatch =
           queryTerm &&
           (job.title.toLowerCase().includes(queryTerm) ||
-           (job.description && job.description.toLowerCase().includes(queryTerm)) ||
-           (job.category && job.category.toLowerCase().includes(queryTerm)));
+            (job.description && job.description.toLowerCase().includes(queryTerm)) ||
+            (job.category && job.category.toLowerCase().includes(queryTerm)));
 
         const catMatch =
           alert.category &&
@@ -302,19 +326,99 @@ const notifyJobAlertSubscribers = async (job) => {
 
         sendEmail({
           to: user.email,
-          subject: `Job Alert: ${job.title} at ${job.company}`,
+          subject: `🔔 Job Alert: ${job.title} at ${job.company}`,
           html: `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #17324f;">
-              <h2 style="color: #1288e8;">New Job Alert Match!</h2>
-              <p>Hello ${user.name},</p>
-              <p>A new job matching your alert was posted:</p>
-              <div style="background-color: #f8fafc; border-left: 4px solid #1288e8; padding: 12px 16px; margin: 16px 0;">
-                <h3 style="margin: 0 0 6px 0;">${job.title}</h3>
-                <p style="margin: 4px 0;"><strong>Company:</strong> ${job.company}</p>
-                <p style="margin: 4px 0;"><strong>Location:</strong> ${job.location}</p>
-                <p style="margin: 4px 0;"><strong>Type:</strong> ${job.type}</p>
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; color: #1e293b;">
+              <!-- Header Banner -->
+              <div style="background: linear-gradient(135deg, #0e2947 0%, #1288e8 100%); padding: 28px 24px; text-align: left; color: #ffffff;">
+                <span style="background: rgba(255, 255, 255, 0.18); color: #e0f2fe; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 10px;">
+                  🔔 New Job Alert Match
+                </span>
+                <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.3;">
+                  ${job.title}
+                </h1>
+                <p style="margin: 6px 0 0 0; font-size: 13px; color: #bae6fd;">
+                  Matching Criteria: <strong>${match.keyword || match.category || 'All Roles'}</strong>
+                </p>
               </div>
-              <p><a href="http://localhost:5173/jobs/${job._id}" style="background-color: #1288e8; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block;">View Job</a></p>
+
+              <!-- Main Content -->
+              <div style="padding: 24px;">
+                <p style="font-size: 14px; margin-top: 0; color: #334155;">
+                  Hello <strong>${user.name}</strong>,
+                </p>
+                <p style="font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 20px;">
+                  A new opening has just been posted that closely matches your job preferences. Here are the position and company details:
+                </p>
+
+                <!-- Company Details Card -->
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                  <div style="margin-bottom: 12px;">
+                    <span style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: #1288e8; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">
+                      Company Overview
+                    </span>
+                    <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a;">
+                      🏢 ${job.company}
+                    </h2>
+                    <span style="font-size: 12px; color: #64748b; display: block; margin-top: 2px;">
+                      📍 Headquarters / Location: <strong>${companyLocation}</strong>
+                    </span>
+                  </div>
+
+                  <p style="margin: 0 0 12px 0; font-size: 12px; color: #475569; line-height: 1.6;">
+                    ${companyBio}
+                  </p>
+
+                  ${
+                    companyWebsite
+                      ? `
+                    <div style="margin-bottom: 12px;">
+                      <a href="${companyWebsite}" target="_blank" style="font-size: 12px; color: #1288e8; font-weight: 600; text-decoration: none;">
+                        🌐 Official Company Website &rarr;
+                      </a>
+                    </div>
+                  `
+                      : ''
+                  }
+
+                  <!-- Key Position Specs -->
+                  <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 12px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                      <tr>
+                        <td style="padding: 4px 0; font-size: 12px; color: #64748b;">💼 <strong>Type:</strong></td>
+                        <td style="padding: 4px 0; font-size: 12px; color: #0f172a; font-weight: 600;">${job.type || 'Full Time'}</td>
+                        <td style="padding: 4px 0; font-size: 12px; color: #64748b;">💰 <strong>Salary:</strong></td>
+                        <td style="padding: 4px 0; font-size: 12px; color: #059669; font-weight: 700;">${salaryText}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 4px 0; font-size: 12px; color: #64748b;">🎯 <strong>Category:</strong></td>
+                        <td style="padding: 4px 0; font-size: 12px; color: #0f172a; font-weight: 600;">${job.category || 'Development'}</td>
+                        <td style="padding: 4px 0; font-size: 12px; color: #64748b;">⏳ <strong>Experience:</strong></td>
+                        <td style="padding: 4px 0; font-size: 12px; color: #0f172a; font-weight: 600;">${job.experience || '1-3 years'}</td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Call to Action Buttons -->
+                <div style="text-align: center; margin: 26px 0 16px 0;">
+                  <a href="http://localhost:5173/jobs/${job._id}" style="background-color: #1288e8; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block;">
+                    View Full Job & Apply Now &rarr;
+                  </a>
+                  <div style="margin-top: 10px;">
+                    <a href="http://localhost:5173/companies/${encodeURIComponent(job.company)}" style="font-size: 12px; color: #64748b; text-decoration: underline;">
+                      Explore all openings at ${job.company}
+                    </a>
+                  </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0 14px 0;" />
+                <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.5;">
+                  You received this notification because you subscribed to Job Alerts on the Job Board Platform with <strong>${user.email}</strong>.
+                  <br/>
+                  Manage your preferences anytime at <a href="http://localhost:5173/candidate/alerts" style="color: #1288e8;">Job Alert Settings</a>.
+                </p>
+              </div>
             </div>
           `,
         }).catch(console.error);
